@@ -220,12 +220,12 @@ prism/
 
 ### 2. Flink Event Processor (Java)
 
-基於 Apache Flink 2.x 的串流處理引擎，負責事件豐富化、進階計算與 DSL 規則觸發。
+基於 Apache Flink 2.2 的串流處理引擎，負責事件豐富化、進階計算與 DSL 規則觸發。
 
 | 項目 | 說明 |
 |------|------|
 | 語言 | Java 17 |
-| 框架 | Apache Flink 2.x |
+| 框架 | Apache Flink 2.2 |
 | DSL 引擎 | AviatorScript |
 | 儲存 | DuckDB (透過 JDBC) |
 | 建構工具 | Maven |
@@ -596,7 +596,7 @@ pnpm dev
 
 零成本抽象、無 GC 停頓，Actix Web async runtime 適合高 QPS I/O 密集型事件接收。rdkafka 提供高效能 Kafka producer。
 
-### Apache Flink 2.x — 串流處理
+### Apache Flink 2.2 — 串流處理
 
 原生支援事件時間、視窗、狀態管理與 exactly-once 語義。水平擴展 TaskManager 處理更大流量，豐富的 Connector 生態系統。
 
