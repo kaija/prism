@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vuexy Theme Dashboard</title>
+    <!-- Public Sans Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Tabler Icons (Vuexy default style) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body data-theme="dark">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="logo"><i class="ti ti-brand-vue"></i> Vuexy</h2>
+            <button class="sidebar-close-btn"><i class="ti ti-x"></i></button>
+        </div>
+        <nav class="sidebar-menu">
+            <ul>
+                <li class="menu-label">Dashboards</li>
+                <li class="menu-item has-submenu active opened">
+                    <a href="#" class="menu-link">
+                        <i class="ti ti-smart-home menu-icon"></i>
+                        <span class="menu-text">Dashboards</span>
+                        <i class="ti ti-chevron-right menu-toggle-icon"></i>
+                    </a>
+                    <ul class="sub-menu">
+                        <li class="sub-menu-item active"><a href="#"><i class="ti ti-circle"></i> Analytics</a></li>
+                        <li class="sub-menu-item"><a href="#"><i class="ti ti-circle"></i> CRM</a></li>
+                        <li class="sub-menu-item"><a href="#"><i class="ti ti-circle"></i> eCommerce</a></li>
+                    </ul>
+                </li>
+                <li class="menu-label">Apps & Pages</li>
+                <li class="menu-item">
+                    <a href="#" class="menu-link">
+                        <i class="ti ti-mail menu-icon"></i>
+                        <span class="menu-text">Email</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="#" class="menu-link">
+                        <i class="ti ti-messages menu-icon"></i>
+                        <span class="menu-text">Chat</span>
+                    </a>
+                </li>
+                <li class="menu-label">Components</li>
+                <li class="menu-item">
+                    <a href="#" class="menu-link">
+                        <i class="ti ti-components menu-icon"></i>
+                        <span class="menu-text">UI Elements</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="menu-toggle"><i class="ti ti-menu-2"></i></button>
+                <div class="search-wrap">
+                    <i class="ti ti-search"></i>
+                    <input type="text" placeholder="Search (Ctrl+/)">
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="icon-action" id="themeToggle" title="Toggle Theme"><i class="ti ti-sun"></i></button>
+                <button class="icon-action badge-wrapper">
+                    <i class="ti ti-bell"></i>
+                    <span class="badge badge-pill badge-danger badge-sm badge-up">4</span>
+                </button>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=John+Doe&background=28C76F&color=fff" alt="Avatar">
+                    <span class="status-dot"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            <div class="page-header">
+                <h1 class="page-title">Analytics Dashboard</h1>
+            </div>
+
+            <!-- Stats & Chart -->
+            <div class="grid layout-main">
+                <div class="card col-span-2">
+                    <div class="card-header">
+                        <h3 class="card-title">Revenue Report</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="revenueChart"></div>
+                    </div>
+                </div>
+                <!-- Mini Stats -->
+                <div class="grid col-1 gap-1">
+                    <div class="card">
+                        <div class="card-body stat-flex">
+                            <div class="stat-meta">
+                                <span class="stat-label">Sales</span>
+                                <h3 class="stat-value">97.5K</h3>
+                            </div>
+                            <div class="stat-icon-wrap primary-light">
+                                <i class="ti ti-chart-bar primary-text"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-body stat-flex">
+                            <div class="stat-meta">
+                                <span class="stat-label">Subscribers</span>
+                                <h3 class="stat-value">25.6K</h3>
+                            </div>
+                            <div class="stat-icon-wrap success-light">
+                                <i class="ti ti-user-check success-text"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid col-2">
+                <!-- Data Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Latest Transactions</h3>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th>Client</th>
+                                    <th>Total</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge label-success">Paid</span></td>
+                                    <td>Tony Stark</td>
+                                    <td>$450.00</td>
+                                    <td><button class="btn-icon"><i class="ti ti-dots-vertical"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge label-warning">Pending</span></td>
+                                    <td>Bruce Wayne</td>
+                                    <td>$1250.00</td>
+                                    <td><button class="btn-icon"><i class="ti ti-dots-vertical"></i></button></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge label-danger">Failed</span></td>
+                                    <td>Clark Kent</td>
+                                    <td>$89.90</td>
+                                    <td><button class="btn-icon"><i class="ti ti-dots-vertical"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Components Box -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Vuexy UI Components</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="component-section">
+                            <h4 class="section-title">Buttons</h4>
+                            <div class="flex-wrap">
+                                <button class="btn btn-primary">Primary</button>
+                                <button class="btn btn-label-primary">Label Primary</button>
+                                <button class="btn btn-outline-primary">Outline</button>
+                                <button class="btn btn-primary btn-icon"><i class="ti ti-send"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="component-section mt-24">
+                            <h4 class="section-title">Form Elements</h4>
+                            <div class="form-group form-floating">
+                                <input type="text" class="form-control" id="floatingInput" placeholder="John Doe">
+                                <label for="floatingInput">Full Name</label>
+                            </div>
+                        </div>
+
+                        <div class="component-section mt-24">
+                            <h4 class="section-title">Spinners & Badges</h4>
+                            <div class="flex-wrap items-center">
+                                <div class="spinner text-primary"></div>
+                                <span class="badge label-info badge-pill">Info Pill</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>

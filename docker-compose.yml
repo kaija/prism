@@ -1,0 +1,116 @@
+version: "3.9"
+
+services:
+  event-ingest-api:
+    build:
+      context: ./services/event-ingest-api
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      INGEST_API_PORT: 8080
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: prism
+      POSTGRES_USER: prism
+      POSTGRES_PASSWORD: prism_dev
+      RUST_LOG: info
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  flink-jobmanager:
+    image: flink:1.20-java17
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+    volumes:
+      - flink_checkpoints:/opt/flink/checkpoints
+      - ./services/flink-processor/target:/opt/flink/usrlib
+
+  flink-taskmanager:
+    image: flink:1.20-java17
+    command: taskmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 4
+        state.backend: rocksdb
+        state.checkpoints.dir: file:///opt/flink/checkpoints
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      DUCKDB_PATH: /data/duckdb/prism.duckdb
+    volumes:
+      - flink_checkpoints:/opt/flink/checkpoints
+      - duckdb_data:/data/duckdb
+      - ./services/flink-processor/target:/opt/flink/usrlib
+    depends_on:
+      - flink-jobmanager
+
+  reporting-api:
+    build:
+      context: ./services/reporting-api
+      dockerfile: Dockerfile
+    ports:
+      - "8001:8001"
+    environment:
+      REPORTING_API_PORT: 8001
+      DUCKDB_PATH: /data/duckdb/prism.duckdb
+      REDIS_URL: redis://redis:6379
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: prism
+      POSTGRES_USER: prism
+      POSTGRES_PASSWORD: prism_dev
+    volumes:
+      - duckdb_data:/data/duckdb
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./services/frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_INGEST_API_URL: http://localhost:8080
+      NEXT_PUBLIC_REPORTING_API_URL: http://localhost:8001
+
+# Extend infra services
+  kafka:
+    extends:
+      file: docker-compose.infra.yml
+      service: kafka
+
+  kafka-ui:
+    extends:
+      file: docker-compose.infra.yml
+      service: kafka-ui
+
+  postgres:
+    extends:
+      file: docker-compose.infra.yml
+      service: postgres
+
+  redis:
+    extends:
+      file: docker-compose.infra.yml
+      service: redis
+
+volumes:
+  kafka_data:
+  postgres_data:
+  redis_data:
+  flink_checkpoints:
+  duckdb_data:

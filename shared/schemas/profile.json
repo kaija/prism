@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prism Profile",
+  "type": "object",
+  "required": ["profile_id", "project_id"],
+  "properties": {
+    "profile_id": { "type": "string", "minLength": 1 },
+    "project_id": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "integer", "description": "UTC epoch milliseconds" },
+    "updated_at": { "type": "integer", "description": "UTC epoch milliseconds" },
+    "props": { "type": "object", "additionalProperties": true }
+  }
+}

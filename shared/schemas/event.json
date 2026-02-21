@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Prism Event",
+  "type": "object",
+  "required": ["event_name", "project_id"],
+  "properties": {
+    "event_id": { "type": "string", "description": "UUID v7 auto-generated if not provided" },
+    "project_id": { "type": "string", "minLength": 1 },
+    "event_name": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "ts": { "type": "integer", "description": "UTC epoch milliseconds" },
+    "profile_id": { "type": "string" },
+    "props": { "type": "object", "additionalProperties": true },
+    "ctx": { "type": "object", "additionalProperties": true, "description": "Device & environment context (ip, user_agent, locale, device_type, os, app_version)" }
+  }
+}
