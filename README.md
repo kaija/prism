@@ -339,7 +339,8 @@ event.name == 'page_view' && event.props.campaign == 'summer_sale' && profile.pr
   "event_id": "uuid-v7",
   "project_id": "proj_abc123",
   "event_name": "purchase",
-  "ts": 1771665000000,
+  "cts": 1771665000000,
+  "sts": 1771665012345,
   "profile_id": "user_12345",
 
   "props": {
@@ -370,7 +371,8 @@ event.name == 'page_view' && event.props.campaign == 'summer_sale' && profile.pr
 | `event_id` | UUID v7 | 是 | 事件唯一識別碼（含時間排序） |
 | `project_id` | String | 是 | 所屬專案 ID |
 | `event_name` | String | 是 | 事件名稱（如 purchase, login, page_view） |
-| `ts` | Integer | 是 | 事件發生時間（UTC epoch ms） |
+| `cts` | Integer | 是 | 事件發生時間（Client UTC epoch ms） |
+| `sts` | Integer | 否 | 事件接收時間（Server UTC epoch ms，API 自動填入） |
 | `profile_id` | String | 否 | 關聯的 Profile ID |
 | `props` | Object | 否 | 事件屬性（預設與自訂皆存放於此） |
 | `ctx` | Object | 否 | 裝置與環境上下文 |

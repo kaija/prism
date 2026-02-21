@@ -7,7 +7,8 @@
     "event_id": { "type": "string", "description": "UUID v7 auto-generated if not provided" },
     "project_id": { "type": "string", "minLength": 1 },
     "event_name": { "type": "string", "minLength": 1, "maxLength": 128 },
-    "ts": { "type": "integer", "description": "UTC epoch milliseconds" },
+    "cts": { "type": "integer", "description": "Client UTC epoch milliseconds (when event occurred)" },
+    "sts": { "type": "integer", "description": "Server UTC epoch milliseconds (when event was ingested, auto-filled)" },
     "profile_id": { "type": "string" },
     "props": { "type": "object", "additionalProperties": true },
     "ctx": { "type": "object", "additionalProperties": true, "description": "Device & environment context (ip, user_agent, locale, device_type, os, app_version)" }

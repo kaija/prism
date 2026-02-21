@@ -4,11 +4,11 @@ CREATE TABLE IF NOT EXISTS events (
     event_id          VARCHAR PRIMARY KEY,
     project_id        VARCHAR NOT NULL,
     event_name        VARCHAR NOT NULL,
-    ts                BIGINT NOT NULL,
+    cts               BIGINT NOT NULL,
+    sts               BIGINT NOT NULL,
     profile_id        VARCHAR,
     props             JSON,
-    ctx               JSON,
-    ingested_at       BIGINT DEFAULT (EPOCH_MS(NOW()))
+    ctx               JSON
 );
 
 CREATE TABLE IF NOT EXISTS profiles (
@@ -31,10 +31,10 @@ CREATE TABLE IF NOT EXISTS trigger_logs (
 
 -- Indexes for common query patterns
 CREATE INDEX IF NOT EXISTS idx_events_project_type
-    ON events(project_id, event_name, ts);
+    ON events(project_id, event_name, cts);
 
 CREATE INDEX IF NOT EXISTS idx_events_project_profile
-    ON events(project_id, profile_id, ts);
+    ON events(project_id, profile_id, cts);
 
 CREATE INDEX IF NOT EXISTS idx_trigger_logs_project
     ON trigger_logs(project_id, triggered_at);
