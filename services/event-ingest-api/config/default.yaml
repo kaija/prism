@@ -1,0 +1,33 @@
+# Event Ingest API — Default Configuration
+# Values here are development defaults. Override per-environment via
+# environment variables prefixed with INGEST_ (separator: __).
+# Example: INGEST_SERVER__PORT=9090 overrides server.port.
+
+# HTTP server settings
+server:
+  host: "0.0.0.0"
+  port: 8080
+  # Seconds to wait for in-flight requests during graceful shutdown
+  shutdown_timeout: 30
+
+# Kafka producer settings
+kafka:
+  bootstrap_servers: "localhost:9092"
+  # Topic for raw ingested events and profile updates
+  topic_raw: "event.raw"
+
+# MaxMind GeoIP enrichment (optional)
+geoip:
+  enabled: false
+  # Path to the MaxMind .mmdb database file (required when enabled)
+  db_path: ""
+
+# Sentry error reporting (optional — omit dsn to disable)
+sentry:
+  # dsn: "https://examplePublicKey@o0.ingest.sentry.io/0"
+  # Minimum seconds between duplicate exception reports (same title)
+  rate_limit_seconds: 300
+
+# Structured logging
+logging:
+  level: "info"
