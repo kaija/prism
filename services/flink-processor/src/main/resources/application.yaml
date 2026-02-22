@@ -1,0 +1,42 @@
+# Prism Flink Event Processor - Default Configuration
+# Values can be overridden via command-line arguments (--key=value)
+# or environment variables (see AppConfig.load() for mappings).
+
+kafka:
+  bootstrap:
+    servers: "localhost:9092"
+
+backend:
+  api:
+    url: "http://localhost:8080"
+
+input:
+  topic: "event.raw"
+
+enriched:
+  topic: "event.enriched"
+
+triggered:
+  topic: "event.triggered"
+
+dlq:
+  topic: "event.dlq"
+
+max:
+  event:
+    history:
+      count: 1000
+      bytes: 10485760  # 10 MB
+
+schema:
+  cache:
+    ttl:
+      seconds: 300  # 5 minutes
+
+rule:
+  cache:
+    ttl:
+      seconds: 60  # 1 minute
+
+checkpoint:
+  dir: "file:///tmp/flink-checkpoints"
