@@ -78,33 +78,57 @@ public class TriggerEvalFunction
     public void processElement(EnrichedEvent enriched, Context ctx, Collector<TriggerOutput> out)
             throws Exception {
         String projectId = enriched.getProjectId();
+        String eventId = enriched.getEvent().getEventId();
+        log.info("[TRIGGER] Processing event: event_id={}, project_id={}, profile_id={}",
+                eventId, projectId, enriched.getEvent().getProfileId());
+
         List<TriggerRule> rules = apiClient.getTriggerRules(projectId);
+        log.info("[TRIGGER] Loaded {} trigger rules for project={}", rules.size(), projectId);
 
         for (TriggerRule rule : rules) {
-            if (!rule.isActive()) continue;
+            if (!rule.isActive()) {
+                log.info("[TRIGGER] Skipping inactive rule: rule_id={}, status={}", rule.getRuleId(), rule.getStatus());
+                continue;
+            }
 
             try {
+                log.info("[TRIGGER] Evaluating rule: rule_id={}, name='{}', dsl='{}' against event_id={}",
+                        rule.getRuleId(), rule.getName(), rule.getDsl(), eventId);
                 processRule(rule, enriched, ctx, out);
             } catch (Exception e) {
-                log.error("Error processing rule '{}' for event '{}': {}",
-                        rule.getRuleId(), enriched.getEvent().getEventId(), e.getMessage(), e);
+                log.error("[TRIGGER] Error processing rule '{}' for event '{}': {}",
+                        rule.getRuleId(), eventId, e.getMessage(), e);
             }
         }
 
         // Emit enriched event to side output for event.enriched sink
+        log.info("[TRIGGER] Emitting enriched event to side output: event_id={}", eventId);
         ctx.output(ENRICHED_OUTPUT, enriched);
     }
 
     private void processRule(TriggerRule rule, EnrichedEvent enriched,
                              Context ctx, Collector<TriggerOutput> out) throws Exception {
+        String ruleId = rule.getRuleId();
+        String eventId = enriched.getEvent().getEventId();
+
         // 1. Check trigger filter (timeframe + event selection)
-        if (!TriggerFilter.matches(rule, enriched)) return;
+        if (!TriggerFilter.matches(rule, enriched)) {
+            log.info("[TRIGGER]   rule_id={} SKIPPED: trigger filter did not match", ruleId);
+            return;
+        }
+        log.info("[TRIGGER]   rule_id={} PASSED trigger filter", ruleId);
 
         // 2. Evaluate constraints if present
         if (rule.getConstraints() != null && rule.getConstraints().nodes() != null
                 && !rule.getConstraints().nodes().isEmpty()) {
             Map<String, Object> constraintContext = buildConstraintContext(enriched);
-            if (!ConstraintEvaluator.evaluate(rule.getConstraints(), constraintContext)) return;
+            if (!ConstraintEvaluator.evaluate(rule.getConstraints(), constraintContext)) {
+                log.info("[TRIGGER]   rule_id={} SKIPPED: constraint evaluation failed", ruleId);
+                return;
+            }
+            log.info("[TRIGGER]   rule_id={} PASSED constraint evaluation", ruleId);
+        } else {
+            log.info("[TRIGGER]   rule_id={} no constraints defined, skipping constraint check", ruleId);
         }
 
         // 3. Optionally evaluate DSL expression
@@ -114,49 +138,61 @@ public class TriggerEvalFunction
             for (PrismEvent e : eventHistoryState.get()) {
                 eventHistory.add(e);
             }
+            log.info("[TRIGGER]   rule_id={} evaluating DSL: '{}' with event_history_size={}",
+                    ruleId, rule.getDsl(), eventHistory.size());
             DslResult dslResult = dslEngine.evaluateTriggerRule(
                     rule.getDsl(), enriched.getEvent(), profile, eventHistory);
             if (!dslResult.success()) {
-                log.warn("DSL evaluation failed for rule '{}': {}",
-                        rule.getRuleId(), dslResult.errorMessage());
+                log.warn("[TRIGGER]   rule_id={} DSL evaluation FAILED: {}", ruleId, dslResult.errorMessage());
                 return;
             }
             // If DSL returns a boolean false, skip this rule
             if (dslResult.value() instanceof Boolean && !(Boolean) dslResult.value()) {
+                log.info("[TRIGGER]   rule_id={} DSL returned false, skipping", ruleId);
                 return;
             }
+            log.info("[TRIGGER]   rule_id={} DSL PASSED, result={}", ruleId, dslResult.value());
+        } else {
+            log.info("[TRIGGER]   rule_id={} no DSL defined, skipping DSL evaluation", ruleId);
         }
 
         // 4. Check frequency
         if (rule.getFrequency() == TriggerFrequency.ONCE_PER_PROFILE) {
             Boolean alreadyFired = firedTriggersState.get(rule.getRuleId());
-            if (Boolean.TRUE.equals(alreadyFired)) return;
+            if (Boolean.TRUE.equals(alreadyFired)) {
+                log.info("[TRIGGER]   rule_id={} SKIPPED: already fired for this profile (ONCE_PER_PROFILE)", ruleId);
+                return;
+            }
         }
 
         // 5. Fire trigger: render payloads and emit actions
         List<TriggerAction> enabledActions = rule.getEnabledActions();
+        log.info("[TRIGGER]   rule_id={} FIRING: {} enabled actions", ruleId, enabledActions.size());
         for (TriggerAction action : enabledActions) {
             try {
                 String renderedPayload = PayloadTemplateRenderer.render(
                         action.getPayloadTemplate(), enriched);
-                out.collect(new TriggerOutput(
+                TriggerOutput output = new TriggerOutput(
                         rule.getRuleId(),
                         enriched.getEvent().getEventId(),
                         enriched.getEvent().getProfileId(),
                         enriched.getProjectId(),
                         action.getType(),
                         renderedPayload,
-                        System.currentTimeMillis()));
+                        System.currentTimeMillis());
+                log.info("[TRIGGER]   rule_id={} EMITTED trigger output: action_type={}, event_id={}",
+                        ruleId, action.getType(), eventId);
+                out.collect(output);
             } catch (Exception e) {
-                log.error("Failed to invoke action '{}' for rule '{}', event '{}': {}",
-                        action.getType(), rule.getRuleId(),
-                        enriched.getEvent().getEventId(), e.getMessage(), e);
+                log.error("[TRIGGER]   rule_id={} FAILED to invoke action '{}' for event '{}': {}",
+                        ruleId, action.getType(), eventId, e.getMessage(), e);
             }
         }
 
         // 6. Mark as fired for ONCE_PER_PROFILE
         if (rule.getFrequency() == TriggerFrequency.ONCE_PER_PROFILE) {
             firedTriggersState.put(rule.getRuleId(), true);
+            log.info("[TRIGGER]   rule_id={} marked as fired (ONCE_PER_PROFILE)", ruleId);
         }
     }
 

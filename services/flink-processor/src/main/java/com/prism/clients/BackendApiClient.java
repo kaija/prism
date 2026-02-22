@@ -74,13 +74,15 @@ public class BackendApiClient implements Serializable {
         List<AttributeDefinition> cached = schemaCache.getIfPresent(projectId);
         try {
             String url = baseUrl + "/api/v1/config/projects/" + projectId + "/attributes";
+            log.info("[FETCH] Fetching attribute definitions for project={} from {}", projectId, url);
             List<AttributeDefinition> result = executeGet(url,
                     new TypeReference<List<AttributeDefinition>>() {});
             schemaCache.put(projectId, result);
+            log.info("[FETCH] Loaded {} attribute definitions for project={}", result.size(), projectId);
             return result;
         } catch (Exception e) {
-            log.warn("Failed to fetch attribute definitions for project {}: {}. " +
-                    "Using cached value.", projectId, e.getMessage());
+            log.warn("[FETCH] Failed to fetch attribute definitions for project {}: {}. " +
+                    "Using cached value (cached={}).", projectId, e.getMessage(), cached != null ? cached.size() : "null");
             return cached != null ? cached : Collections.emptyList();
         }
     }
@@ -97,13 +99,20 @@ public class BackendApiClient implements Serializable {
         List<TriggerRule> cached = ruleCache.getIfPresent(projectId);
         try {
             String url = baseUrl + "/api/v1/config/projects/" + projectId + "/trigger-rules";
+            log.info("[FETCH] Fetching trigger rules for project={} from {}", projectId, url);
             List<TriggerRule> result = executeGet(url,
                     new TypeReference<List<TriggerRule>>() {});
             ruleCache.put(projectId, result);
+            log.info("[FETCH] Loaded {} trigger rules for project={}", result.size(), projectId);
+            for (TriggerRule r : result) {
+                log.info("[FETCH]   rule_id={}, name='{}', status={}, dsl='{}', actions={}",
+                        r.getRuleId(), r.getName(), r.getStatus(), r.getDsl(),
+                        r.getActions() != null ? r.getActions().size() : 0);
+            }
             return result;
         } catch (Exception e) {
-            log.warn("Failed to fetch trigger rules for project {}: {}. " +
-                    "Using cached value.", projectId, e.getMessage());
+            log.warn("[FETCH] Failed to fetch trigger rules for project {}: {}. " +
+                    "Using cached value (cached={}).", projectId, e.getMessage(), cached != null ? cached.size() : "null");
             return cached != null ? cached : Collections.emptyList();
         }
     }

@@ -62,10 +62,14 @@ public class EventEnrichFunction
     @Override
     public void processElement(PrismEvent event, Context ctx, Collector<EnrichedEvent> out)
             throws Exception {
+        log.info("[ENRICH] Processing event: event_id={}, event_name={}, project_id={}, profile_id={}",
+                event.getEventId(), event.getEventName(), event.getProjectId(), event.getProfileId());
         ProfileState profile = getOrCreateProfile(event);
         profile.setUpdatedAt(System.currentTimeMillis());
         appendEventWithRetention(event);
         profileState.update(profile);
+        log.info("[ENRICH] Enriched event emitted: event_id={}, profile_id={}, profile_created_at={}",
+                event.getEventId(), profile.getProfileId(), profile.getCreatedAt());
         out.collect(new EnrichedEvent(event, profile));
     }
 

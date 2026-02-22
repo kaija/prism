@@ -67,8 +67,11 @@ public class ComputedAttributeFunction
         PrismEvent event = enriched.getEvent();
         String projectId = enriched.getProjectId();
 
+        log.info("[COMPUTE] Processing event: event_id={}, project_id={}", event.getEventId(), projectId);
+
         // Load attribute definitions for this project
         List<AttributeDefinition> allAttrs = apiClient.getAttributeDefinitions(projectId);
+        log.info("[COMPUTE] Loaded {} attribute definitions for project={}", allAttrs.size(), projectId);
 
         // 1. Evaluate event-level computed attributes
         List<AttributeDefinition> eventAttrs = allAttrs.stream()
@@ -111,6 +114,8 @@ public class ComputedAttributeFunction
         profileState.update(profile);
 
         // 4. Emit enriched event
+        log.info("[COMPUTE] Done computing attributes for event_id={}, event_computed={}, profile_computed={}",
+                event.getEventId(), eventAttrs.size(), profileAttrs.size());
         out.collect(enriched);
     }
 }

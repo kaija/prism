@@ -38,6 +38,9 @@ public class DeserializationRouterFunction extends ProcessFunction<byte[], Prism
             throws Exception {
         DeserializationResult result = deserializer.tryDeserialize(value);
         if (result.success()) {
+            LOG.info("[DESER] Deserialized event: event_id={}, event_name={}, project_id={}, profile_id={}",
+                    result.event().getEventId(), result.event().getEventName(),
+                    result.event().getProjectId(), result.event().getProfileId());
             out.collect(result.event());
         } else {
             String originalMessage = value != null

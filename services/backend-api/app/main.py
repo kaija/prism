@@ -18,6 +18,7 @@ from app.repositories.duckdb_repo import DuckDBRepository
 from app.repositories.postgres_repo import PostgresRepository
 from app.routers import (
     config_router,
+    flink_config_router,
     health_router,
     job_router,
     profile_router,
@@ -115,4 +116,5 @@ app.include_router(trigger_router.router)
 app.include_router(report_router.router)
 app.include_router(profile_router.router)
 app.include_router(job_router.router)
+app.include_router(flink_config_router.router)
 app.include_router(health_router.router)
