@@ -56,6 +56,25 @@ tests/performance/.venv/bin/locust \
   --tags track
 ```
 
+## Capacity Tests (aiohttp)
+
+Pure async throughput test — finds the QPS ceiling with zero artificial wait.
+
+```bash
+# Setup virtualenv (first time only)
+python3 -m venv tests/capacity/.venv
+tests/capacity/.venv/bin/pip install -r tests/capacity/requirements.txt
+
+# Default: 200 concurrent, 15s duration, 3s ramp
+tests/capacity/.venv/bin/python tests/capacity/run.py
+
+# Push harder: 500 concurrent, 30s
+tests/capacity/.venv/bin/python tests/capacity/run.py -c 500 -d 30 -r 5
+
+# Custom target
+tests/capacity/.venv/bin/python tests/capacity/run.py --url http://your-host:8080 -c 1000 -d 60
+```
+
 ## Teardown
 
 ```bash
