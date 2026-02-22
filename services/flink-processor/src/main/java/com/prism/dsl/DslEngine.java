@@ -12,7 +12,7 @@ import java.util.List;
  * <p>Implementations include {@code MockDslEngine} for testing/development
  * and a future AviatorScript-based production engine.</p>
  */
-public interface DslEngine {
+public interface DslEngine extends java.io.Serializable {
 
     /**
      * Evaluate an event-level computed attribute formula.

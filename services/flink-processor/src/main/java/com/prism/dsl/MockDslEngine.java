@@ -15,6 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class MockDslEngine implements DslEngine {
 
+    private static final long serialVersionUID = 1L;
+
     private final Map<String, Object> configuredResults = new ConcurrentHashMap<>();
 
     /**
