@@ -48,21 +48,25 @@ services:
     depends_on:
       - flink-jobmanager
 
-  reporting-api:
+  backend-api:
     build:
-      context: ./services/reporting-api
+      context: ./services/backend-api
       dockerfile: Dockerfile
     ports:
       - "8001:8001"
     environment:
-      REPORTING_API_PORT: 8001
+      BACKEND_API_PORT: 8001
+      BACKEND_API_LOG_LEVEL: info
+      BACKEND_API_QUERY_TIMEOUT_SECONDS: 30
+      MAX_PROJECT_CONCURRENT_REPORTS: 3
+      MAX_SERVICE_CONCURRENT_REPORTS: 10
       DUCKDB_PATH: /data/duckdb/prism.duckdb
       REDIS_URL: redis://redis:6379
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: prism
       POSTGRES_USER: prism
-      POSTGRES_PASSWORD: prism_dev_dev
+      POSTGRES_PASSWORD: prism_dev
     volumes:
       - duckdb_data:/data/duckdb
     depends_on:
@@ -70,16 +74,6 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
-
-  frontend:
-    build:
-      context: ./services/frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_INGEST_API_URL: http://localhost:8080
-      NEXT_PUBLIC_REPORTING_API_URL: http://localhost:8001
 
 # Extend infra services
   kafka:

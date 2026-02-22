@@ -11,7 +11,7 @@ Prism 是一套即時事件處理與觸發系統，支援事件接收、格式�
 - [核心元件](#核心元件)
   - [Event Ingest API (Rust)](#1-event-ingest-api-rust)
   - [Flink Event Processor (Java)](#2-flink-event-processor-java)
-  - [Reporting API (Python)](#3-reporting-api-python)
+  - [Backend API (Python)](#3-backend-api-python)
   - [Frontend (Next.js)](#4-frontend-nextjs)
 - [資料模型](#資料模型)
   - [Event 模型](#event-模型)
@@ -110,7 +110,7 @@ prism/
 │   │   │   └── sinks/                 # Sink（DuckDB, KafkaTrigger）
 │   │   └── src/test/java/com/prism/
 │   │
-│   ├── reporting-api/                 # Python - 報表查詢 API
+│   ├── backend-api/                   # Python - Backend API
 │   │   ├── pyproject.toml
 │   │   ├── Dockerfile
 │   │   ├── app/
@@ -559,8 +559,8 @@ cd services/flink-processor
 mvn clean package
 java -jar target/flink-processor.jar
 
-# Reporting API (Python)
-cd services/reporting-api
+# Backend API (Python)
+cd services/backend-api
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -579,7 +579,7 @@ pnpm dev
 | event-ingest-api | 8080 | Rust 事件接收 API |
 | flink-jobmanager | 8081 | Flink Web UI |
 | flink-taskmanager | — | Flink 工作節點 |
-| reporting-api | 8001 | Python 報表 API |
+| backend-api | 8001 | Python Backend API |
 | frontend | 3000 | Next.js 前端 |
 | kafka | 9092 | Kafka Broker |
 | kafka-ui | 9094 | Kafka Web UI |
