@@ -1,8 +1,8 @@
 """TriggerService for trigger setting CRUD and DSL validation.
 
 Manages CRUD operations on the trigger_settings PostgreSQL table
-via the injected PostgresRepository. Provides basic DSL syntax
-validation (actual DSL evaluation is handled by Flink).
+via the injected PostgresRepository. Validates DSL expressions
+using the Lark-based DSL parser and Function Registry validator.
 """
 
 from __future__ import annotations
@@ -17,6 +17,8 @@ import structlog
 
 from app.models.common import PaginatedResult
 from app.models.trigger import TriggerAction, TriggerCreate, TriggerSetting, TriggerUpdate
+from app.dsl.parser import DslParser
+from app.dsl.validator import validate
 from app.repositories.postgres_repo import PostgresRepository
 
 logger = structlog.get_logger()
@@ -37,6 +39,7 @@ class TriggerService:
 
     def __init__(self, repo: PostgresRepository) -> None:
         self._repo = repo
+        self._parser = DslParser()
 
     async def create(self, project_id: str, payload: TriggerCreate) -> TriggerSetting:
         """Create a trigger. Validates DSL expression. Returns created record."""
@@ -159,11 +162,11 @@ class TriggerService:
         return result.endswith("1")
 
     def validate_dsl(self, dsl: str) -> ValidationResult:
-        """Validate a DSL expression syntax.
+        """Validate a DSL expression using the DSL parser and validator.
 
-        Since actual DSL evaluation is handled by Flink, this performs
-        basic syntax validation: non-empty, reasonable length, and
-        balanced parentheses/brackets.
+        Parses the expression into an AST using DslParser, then validates
+        the AST against the Function Registry for function existence,
+        argument counts, and type compatibility.
         """
         errors: list[str] = []
 
@@ -173,21 +176,17 @@ class TriggerService:
 
         if len(dsl) > MAX_DSL_LENGTH:
             errors.append(f"DSL expression exceeds maximum length of {MAX_DSL_LENGTH} characters")
+            return ValidationResult(valid=False, errors=errors)
 
-        # Check balanced parentheses and brackets
-        stack: list[str] = []
-        pairs = {"(": ")", "[": "]", "{": "}"}
-        for ch in dsl:
-            if ch in pairs:
-                stack.append(pairs[ch])
-            elif ch in pairs.values():
-                if not stack or stack[-1] != ch:
-                    errors.append("DSL expression has unbalanced brackets")
-                    break
-                stack.pop()
-        else:
-            if stack:
-                errors.append("DSL expression has unbalanced brackets")
+        try:
+            ast = self._parser.parse(dsl)
+        except Exception as exc:
+            errors.append(f"DSL syntax error: {exc}")
+            return ValidationResult(valid=False, errors=errors)
+
+        result = validate(ast)
+        if not result.valid:
+            errors.extend(e.message for e in result.errors)
 
         return ValidationResult(valid=len(errors) == 0, errors=errors)
 

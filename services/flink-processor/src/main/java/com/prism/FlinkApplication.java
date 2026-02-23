@@ -1,6 +1,7 @@
 package com.prism;
 
 import com.prism.config.AppConfig;
+import com.prism.dsl.AviatorDslEngine;
 import com.prism.dsl.DslEngine;
 import com.prism.dsl.MockDslEngine;
 import com.prism.functions.ComputedAttributeFunction;
@@ -51,7 +52,7 @@ public class FlinkApplication {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
 
-        // Create DslEngine — MockDslEngine for now, swappable via config flag
+        // Create DslEngine based on config flag
         DslEngine dslEngine = createDslEngine(appConfig);
 
         // Build the pipeline
@@ -61,13 +62,18 @@ public class FlinkApplication {
     }
 
     /**
-     * Create the DslEngine implementation. Currently returns MockDslEngine;
-     * a future AviatorEngine can be selected via a config flag.
+     * Create the DslEngine implementation based on config.
+     * Defaults to AviatorDslEngine; set dsl.engine.type=mock for MockDslEngine.
      */
     static DslEngine createDslEngine(AppConfig config) {
-        // TODO: When AviatorEngine is available, select based on config flag
-        LOG.info("Using MockDslEngine (development mode)");
-        return new MockDslEngine();
+        if ("mock".equalsIgnoreCase(config.getDslEngineType())) {
+            LOG.info("Using MockDslEngine (development/test mode)");
+            return new MockDslEngine();
+        }
+        LOG.info("Using AviatorDslEngine (production mode)");
+        AviatorDslEngine engine = new AviatorDslEngine();
+        engine.init();
+        return engine;
     }
 
     /**

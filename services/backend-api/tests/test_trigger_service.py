@@ -62,10 +62,10 @@ def _make_db_row(
 
 class TestCreate:
     async def test_creates_trigger_and_returns_setting(self, service, mock_repo):
-        mock_repo.fetch_one.return_value = _make_db_row()
+        mock_repo.fetch_one.return_value = _make_db_row(dsl='GT(EVENT("count"), 5)')
         payload = TriggerCreate(
             name="My Trigger",
-            dsl="event.count > 5",
+            dsl='GT(EVENT("count"), 5)',
             actions=[_make_action()],
         )
 
@@ -73,7 +73,7 @@ class TestCreate:
 
         assert isinstance(result, TriggerSetting)
         assert result.name == "My Trigger"
-        assert result.dsl == "event.count > 5"
+        assert result.dsl == 'GT(EVENT("count"), 5)'
         assert result.status == "draft"
         assert len(result.actions) == 1
         mock_repo.fetch_one.assert_called_once()
@@ -94,10 +94,10 @@ class TestCreate:
         mock_repo.fetch_one.assert_not_called()
 
     async def test_create_generates_uuid_rule_id(self, service, mock_repo):
-        mock_repo.fetch_one.return_value = _make_db_row()
+        mock_repo.fetch_one.return_value = _make_db_row(dsl='GT(EVENT("x"), 1)')
         payload = TriggerCreate(
             name="Trigger",
-            dsl="x > 1",
+            dsl='GT(EVENT("x"), 1)',
             actions=[_make_action()],
         )
 
@@ -109,10 +109,10 @@ class TestCreate:
         assert len(rule_id_arg) == 36  # UUID format
 
     async def test_create_serializes_actions_as_json(self, service, mock_repo):
-        mock_repo.fetch_one.return_value = _make_db_row()
+        mock_repo.fetch_one.return_value = _make_db_row(dsl='GT(EVENT("x"), 1)')
         payload = TriggerCreate(
             name="Trigger",
-            dsl="x > 1",
+            dsl='GT(EVENT("x"), 1)',
             actions=[_make_action(), TriggerAction(type="notification")],
         )
 
@@ -266,7 +266,7 @@ class TestDelete:
 
 class TestValidateDsl:
     def test_valid_simple_expression(self, service):
-        result = service.validate_dsl("event.count > 5")
+        result = service.validate_dsl("GT(EVENT(\"count\"), 5)")
 
         assert result.valid is True
         assert result.errors == []
@@ -289,30 +289,36 @@ class TestValidateDsl:
         assert result.valid is False
         assert any("length" in e.lower() for e in result.errors)
 
-    def test_unbalanced_parentheses(self, service):
-        result = service.validate_dsl("(event.count > 5")
+    def test_syntax_error_invalid_expression(self, service):
+        result = service.validate_dsl("GT(EVENT(\"count\"), )")
 
         assert result.valid is False
-        assert any("unbalanced" in e.lower() for e in result.errors)
+        assert any("syntax" in e.lower() for e in result.errors)
 
-    def test_balanced_parentheses(self, service):
-        result = service.validate_dsl("(event.count > 5) AND (user.age < 30)")
+    def test_valid_nested_expression(self, service):
+        result = service.validate_dsl('AND(GT(EVENT("count"), 5), LT(EVENT("age"), 30))')
 
         assert result.valid is True
 
-    def test_unbalanced_brackets(self, service):
-        result = service.validate_dsl("events[0}")
+    def test_unknown_function_is_invalid(self, service):
+        result = service.validate_dsl('FOOBAR(EVENT("x"))')
 
         assert result.valid is False
-        assert any("unbalanced" in e.lower() for e in result.errors)
+        assert any("unknown" in e.lower() for e in result.errors)
 
-    def test_nested_balanced_brackets(self, service):
-        result = service.validate_dsl("func({arr: [1, 2]})")
+    def test_wrong_arg_count_is_invalid(self, service):
+        result = service.validate_dsl("GT(1)")
+
+        assert result.valid is False
+        assert any("argument" in e.lower() for e in result.errors)
+
+    def test_valid_literal_expression(self, service):
+        result = service.validate_dsl("42")
 
         assert result.valid is True
 
     def test_returns_validation_result_type(self, service):
-        result = service.validate_dsl("valid")
+        result = service.validate_dsl("true")
 
         assert isinstance(result, ValidationResult)
 

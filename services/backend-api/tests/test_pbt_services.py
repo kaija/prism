@@ -243,8 +243,19 @@ trigger_name_strategy = st.text(
     alphabet=st.characters(whitelist_categories=("L", "N", "Zs"), whitelist_characters="_-"),
 ).filter(lambda s: s.strip())
 
-# DSL expressions: valid balanced expressions
-dsl_strategy = st.from_regex(r"[a-z][a-z0-9_.]{0,29} [><=!]+ [0-9]{1,5}", fullmatch=True)
+# DSL expressions: valid function-call DSL expressions that pass the real parser
+dsl_strategy = st.sampled_from([
+    'GT(EVENT("score"), 0)',
+    'LT(EVENT("age"), 100)',
+    'EQ(EVENT("status"), "active")',
+    'AND(GT(EVENT("score"), 10), LT(EVENT("score"), 100))',
+    'NOT(EQ(EVENT("type"), "test"))',
+    'GTE(EVENT("count"), 1)',
+    'LTE(EVENT("value"), 999)',
+    'OR(EQ(EVENT("flag"), true), GT(EVENT("n"), 5))',
+    'NEQ(EVENT("name"), "unknown")',
+    'COUNT(EVENT("id"))',
+])
 
 # Trigger status
 trigger_status_strategy = st.sampled_from(["active", "inactive", "draft"])

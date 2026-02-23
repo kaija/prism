@@ -32,6 +32,7 @@ public class AppConfig implements Serializable {
     private Duration schemaCacheTtl = DEFAULT_SCHEMA_CACHE_TTL;
     private Duration ruleCacheTtl = DEFAULT_RULE_CACHE_TTL;
     private String checkpointDir;
+    private String dslEngineType = "aviator";
 
     public AppConfig() {}
 
@@ -69,6 +70,8 @@ public class AppConfig implements Serializable {
                 String.valueOf(DEFAULT_RULE_CACHE_TTL.toSeconds()))));
         config.checkpointDir = resolveArg(args, "checkpoint.dir",
                 "CHECKPOINT_DIR", "file:///tmp/flink-checkpoints");
+        config.dslEngineType = resolveArg(args, "dsl.engine.type",
+                "DSL_ENGINE_TYPE", "aviator");
 
         return config;
     }
@@ -126,6 +129,9 @@ public class AppConfig implements Serializable {
     public String getCheckpointDir() { return checkpointDir; }
     public void setCheckpointDir(String checkpointDir) { this.checkpointDir = checkpointDir; }
 
+    public String getDslEngineType() { return dslEngineType; }
+    public void setDslEngineType(String dslEngineType) { this.dslEngineType = dslEngineType; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -136,11 +142,12 @@ public class AppConfig implements Serializable {
                 && Objects.equals(kafkaBootstrapServers, that.kafkaBootstrapServers)
                 && Objects.equals(backendApiUrl, that.backendApiUrl)
                 && Objects.equals(inputTopic, that.inputTopic)
-                && Objects.equals(checkpointDir, that.checkpointDir);
+                && Objects.equals(checkpointDir, that.checkpointDir)
+                && Objects.equals(dslEngineType, that.dslEngineType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(kafkaBootstrapServers, backendApiUrl, inputTopic, checkpointDir);
+        return Objects.hash(kafkaBootstrapServers, backendApiUrl, inputTopic, checkpointDir, dslEngineType);
     }
 }
