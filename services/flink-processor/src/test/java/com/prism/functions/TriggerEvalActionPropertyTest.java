@@ -2,7 +2,8 @@ package com.prism.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prism.config.AppConfig;
-import com.prism.dsl.MockDslEngine;
+import com.prism.dsl.AviatorDslEngine;
+import com.prism.dsl.DslEngine;
 import com.prism.models.*;
 import net.jqwik.api.*;
 import net.jqwik.api.lifecycle.AfterProperty;
@@ -55,9 +56,10 @@ class TriggerEvalActionPropertyTest {
     void actionInvocationEmitsCorrectTriggerOutputs(
             @ForAll("triggerTestCases") TriggerTestCase testCase) throws Exception {
 
-        MockDslEngine mockDslEngine = new MockDslEngine();
-        // MockDslEngine defaults to returning true for unconfigured formulas,
-        // so DSL expressions will pass by default.
+        AviatorDslEngine dslEngine = new AviatorDslEngine();
+        dslEngine.init();
+        // AviatorDslEngine evaluates real DSL — rules without DSL expressions
+        // will pass through (no DSL check), so triggers fire by default.
 
         AppConfig config = new AppConfig();
         String baseUrl = server.url("/").toString().replaceAll("/$", "");
@@ -82,7 +84,7 @@ class TriggerEvalActionPropertyTest {
             }
         });
 
-        TriggerEvalFunction function = new TriggerEvalFunction(mockDslEngine, config);
+        TriggerEvalFunction function = new TriggerEvalFunction(dslEngine, config);
         KeyedOneInputStreamOperatorTestHarness<String, EnrichedEvent, TriggerOutput> harness =
                 new KeyedOneInputStreamOperatorTestHarness<>(
                         new KeyedProcessOperator<>(function),

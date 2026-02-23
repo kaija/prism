@@ -9,8 +9,7 @@ import java.util.List;
  * Pluggable DSL engine interface for evaluating computed attributes
  * and trigger rule expressions.
  *
- * <p>Implementations include {@code MockDslEngine} for testing/development
- * and a future AviatorScript-based production engine.</p>
+ * <p>Implementations include {@code AviatorDslEngine} for production use.</p>
  */
 public interface DslEngine extends java.io.Serializable {
 

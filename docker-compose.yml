@@ -21,6 +21,7 @@ services:
     ports:
       - "8081:8081"
     command: standalone-job --job-classname com.prism.FlinkApplication
+    user: "root"
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager
@@ -40,6 +41,7 @@ services:
       context: ./services/flink-processor
       dockerfile: Dockerfile
     command: taskmanager
+    user: "root"
     environment:
       FLINK_PROPERTIES: |
         jobmanager.rpc.address: flink-jobmanager

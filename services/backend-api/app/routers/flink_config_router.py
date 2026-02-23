@@ -25,7 +25,8 @@ async def get_attributes(project_id: str, request: Request) -> list[dict]:
     """
     pg = request.app.state.pg_repo
     rows = await pg.fetch_all(
-        "SELECT attr_name AS name, attr_type AS type, entity_type, indexed "
+        "SELECT attr_name AS name, attr_type AS type, entity_type, indexed, "
+        "COALESCE(computed, false) AS computed, formula "
         "FROM attribute_definitions WHERE project_id = $1",
         project_id,
     )
@@ -35,8 +36,8 @@ async def get_attributes(project_id: str, request: Request) -> list[dict]:
             "type": r["type"],
             "entity_type": r["entity_type"],
             "indexed": r["indexed"],
-            "computed": False,
-            "formula": None,
+            "computed": r["computed"],
+            "formula": r["formula"],
         }
         for r in rows
     ]

@@ -3,7 +3,6 @@ package com.prism;
 import com.prism.config.AppConfig;
 import com.prism.dsl.AviatorDslEngine;
 import com.prism.dsl.DslEngine;
-import com.prism.dsl.MockDslEngine;
 import com.prism.functions.ComputedAttributeFunction;
 import com.prism.functions.DeserializationRouterFunction;
 import com.prism.functions.EventEnrichFunction;
@@ -18,6 +17,7 @@ import com.prism.sinks.TriggerOutputSerializationSchema;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.StateBackendOptions;
+import org.apache.flink.connector.base.DeliveryGuarantee;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
@@ -52,6 +52,9 @@ public class FlinkApplication {
         StreamExecutionEnvironment env =
                 StreamExecutionEnvironment.getExecutionEnvironment(flinkConfig);
 
+        // Enable checkpointing every 10 seconds for Kafka sink commit
+        env.enableCheckpointing(10_000);
+
         // Create DslEngine based on config flag
         DslEngine dslEngine = createDslEngine(appConfig);
 
@@ -62,15 +65,11 @@ public class FlinkApplication {
     }
 
     /**
-     * Create the DslEngine implementation based on config.
-     * Defaults to AviatorDslEngine; set dsl.engine.type=mock for MockDslEngine.
+     * Create the DslEngine implementation.
+     * Always uses AviatorDslEngine (production DSL engine).
      */
     static DslEngine createDslEngine(AppConfig config) {
-        if ("mock".equalsIgnoreCase(config.getDslEngineType())) {
-            LOG.info("Using MockDslEngine (development/test mode)");
-            return new MockDslEngine();
-        }
-        LOG.info("Using AviatorDslEngine (production mode)");
+        LOG.info("Using AviatorDslEngine");
         AviatorDslEngine engine = new AviatorDslEngine();
         engine.init();
         return engine;
@@ -105,6 +104,7 @@ public class FlinkApplication {
         KafkaSink<String> dlqSink = KafkaSink.<String>builder()
                 .setBootstrapServers(config.getKafkaBootstrapServers())
                 .setRecordSerializer(new DlqSerializationSchema(config.getDlqTopic()))
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .build();
 
         dlqStream.sinkTo(dlqSink).name("kafka-sink-event-dlq");
@@ -131,6 +131,7 @@ public class FlinkApplication {
                 .setBootstrapServers(config.getKafkaBootstrapServers())
                 .setRecordSerializer(
                         new TriggerOutputSerializationSchema(config.getTriggeredTopic()))
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .build();
 
         triggerStream.sinkTo(triggeredSink).name("kafka-sink-event-triggered");
@@ -143,6 +144,7 @@ public class FlinkApplication {
                 .setBootstrapServers(config.getKafkaBootstrapServers())
                 .setRecordSerializer(
                         new EnrichedEventSerializationSchema(config.getEnrichedTopic()))
+                .setDeliveryGuarantee(DeliveryGuarantee.AT_LEAST_ONCE)
                 .build();
 
         enrichedOutput.sinkTo(enrichedSink).name("kafka-sink-event-enriched");

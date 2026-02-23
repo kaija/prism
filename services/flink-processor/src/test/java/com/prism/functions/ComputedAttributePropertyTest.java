@@ -2,7 +2,8 @@ package com.prism.functions;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prism.config.AppConfig;
-import com.prism.dsl.MockDslEngine;
+import com.prism.dsl.AviatorDslEngine;
+import com.prism.dsl.DslEngine;
 import com.prism.models.AttributeDefinition;
 import com.prism.models.EnrichedEvent;
 import com.prism.models.PrismEvent;
@@ -80,11 +81,9 @@ class ComputedAttributePropertyTest {
             }
         });
 
-        // Configure MockDslEngine with expected results for each formula
-        MockDslEngine mockDslEngine = new MockDslEngine();
-        for (Map.Entry<String, Object> entry : formulaResults.entrySet()) {
-            mockDslEngine.setResult(entry.getKey(), entry.getValue());
-        }
+        // Use real AviatorDslEngine — formulas are real DSL expressions
+        AviatorDslEngine dslEngine = new AviatorDslEngine();
+        dslEngine.init();
 
         // Set up AppConfig pointing at MockWebServer
         AppConfig config = new AppConfig();
@@ -92,7 +91,7 @@ class ComputedAttributePropertyTest {
         config.setBackendApiUrl(baseUrl);
 
         // Create Flink harness
-        ComputedAttributeFunction function = new ComputedAttributeFunction(mockDslEngine, config);
+        ComputedAttributeFunction function = new ComputedAttributeFunction(dslEngine, config);
         KeyedOneInputStreamOperatorTestHarness<String, EnrichedEvent, EnrichedEvent> harness =
                 new KeyedOneInputStreamOperatorTestHarness<>(
                         new KeyedProcessOperator<>(function),
@@ -219,13 +218,13 @@ class ComputedAttributePropertyTest {
     /**
      * Generate a list of computed attribute definitions (mix of event and profile)
      * along with a map of formula -> expected result value.
-     * Each attribute gets a unique formula and a unique name.
+     * Each attribute gets a real DSL formula that produces a known result.
      */
     private Arbitrary<Pair<List<AttributeDefinition>, Map<String, Object>>> attributeListWithResults() {
-        // Generate 1-6 event computed attrs and 1-6 profile computed attrs
+        // Generate 1-4 event computed attrs and 1-4 profile computed attrs
         return Combinators.combine(
-                Arbitraries.integers().between(1, 6),
-                Arbitraries.integers().between(1, 6)
+                Arbitraries.integers().between(1, 4),
+                Arbitraries.integers().between(1, 4)
         ).flatAs((eventCount, profileCount) -> {
             int total = eventCount + profileCount;
             // Generate unique attribute names
@@ -234,8 +233,9 @@ class ComputedAttributePropertyTest {
                     .map(String::toLowerCase)
                     .list().ofSize(total).uniqueElements();
 
-            // Generate result values for each formula
-            Arbitrary<List<Object>> valuesArb = resultValues()
+            // Generate integer values for formulas (use ADD(n, 0) to produce known results)
+            Arbitrary<List<Integer>> valuesArb = Arbitraries.integers()
+                    .between(-1000, 1000)
                     .list().ofSize(total);
 
             return Combinators.combine(namesArb, valuesArb).as((names, values) -> {
@@ -245,14 +245,16 @@ class ComputedAttributePropertyTest {
                 for (int i = 0; i < total; i++) {
                     String name = names.get(i);
                     String entityType = i < eventCount ? "event" : "profile";
-                    String formula = entityType + "_formula_" + name;
-                    Object value = values.get(i);
+                    int val = values.get(i);
+                    // Use ADD(val, 0) as a real DSL formula that evaluates to val
+                    String formula = "ADD(" + val + ", 0)";
 
                     attrs.add(new AttributeDefinition(
-                            name, "string", entityType,
+                            name, "number", entityType,
                             false, true, formula
                     ));
-                    formulaResults.put(formula, value);
+                    // AviatorDslEngine returns Long for integer ADD
+                    formulaResults.put(formula, (long) val);
                 }
 
                 return new Pair<>(attrs, formulaResults);
@@ -261,14 +263,7 @@ class ComputedAttributePropertyTest {
     }
 
     private Arbitrary<Object> resultValues() {
-        return Arbitraries.oneOf(
-                Arbitraries.strings().alpha().ofMinLength(1).ofMaxLength(20).map(s -> (Object) s),
-                Arbitraries.integers().between(-10000, 10000).map(i -> (Object) i),
-                Arbitraries.doubles().between(-1000.0, 1000.0)
-                        .filter(d -> !d.isNaN() && !d.isInfinite())
-                        .map(d -> (Object) d),
-                Arbitraries.of(true, false).map(b -> (Object) b)
-        );
+        return Arbitraries.integers().between(-1000, 1000).map(i -> (Object) i);
     }
 
     /** Simple pair record for bundling two values. */

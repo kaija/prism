@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS attribute_definitions (
     attr_name     VARCHAR(128) NOT NULL,
     attr_type     VARCHAR(20) NOT NULL,
     indexed       BOOLEAN DEFAULT FALSE,
+    computed      BOOLEAN DEFAULT FALSE,
+    formula       TEXT,
     created_at    TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(project_id, entity_type, attr_name)
 );

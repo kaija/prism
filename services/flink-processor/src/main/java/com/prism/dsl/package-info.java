@@ -1,4 +1,4 @@
 /**
- * DSL engine interface and implementations (MockDslEngine, future AviatorEngine).
+ * DSL engine interface and implementations (AviatorDslEngine).
  */
 package com.prism.dsl;

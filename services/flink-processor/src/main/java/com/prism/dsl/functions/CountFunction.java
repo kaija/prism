@@ -19,6 +19,19 @@ public class CountFunction extends AbstractFunction {
         return "dsl_count";
     }
 
+    /**
+     * Zero-arg: COUNT() — counts all events in event_history.
+     */
+    @Override
+    public AviatorObject call(Map<String, Object> env) {
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> history = (List<Map<String, Object>>) env.get("event_history");
+        if (history == null) {
+            return AviatorLong.valueOf(0L);
+        }
+        return AviatorLong.valueOf((long) history.size());
+    }
+
     @Override
     public AviatorObject call(Map<String, Object> env, AviatorObject arg1) {
         // Try to get the value — if it's a list (e.g. from UNIQUE), count its size

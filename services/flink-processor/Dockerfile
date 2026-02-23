@@ -11,3 +11,4 @@ RUN rm -f /app/target/original-*.jar
 # Stage 2: Runtime
 FROM flink:2.2-java17
 COPY --from=builder /app/target/flink-processor-*.jar /opt/flink/usrlib/flink-processor.jar
+RUN mkdir -p /opt/flink/checkpoints && chmod 777 /opt/flink/checkpoints

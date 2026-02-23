@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.prism.config.AppConfig;
-import com.prism.dsl.MockDslEngine;
+import com.prism.dsl.AviatorDslEngine;
+import com.prism.dsl.DslEngine;
 import com.prism.models.*;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -22,12 +23,12 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests for TriggerEvalFunction using Flink's KeyedOneInputStreamOperatorTestHarness,
- * MockDslEngine, and MockWebServer.
+ * AviatorDslEngine, and MockWebServer.
  */
 class TriggerEvalFunctionTest {
 
     private KeyedOneInputStreamOperatorTestHarness<String, EnrichedEvent, TriggerOutput> harness;
-    private MockDslEngine mockDslEngine;
+    private DslEngine dslEngine;
     private MockWebServer mockWebServer;
     private AppConfig config;
     private ObjectMapper objectMapper;
@@ -40,11 +41,13 @@ class TriggerEvalFunctionTest {
         config = new AppConfig();
         config.setBackendApiUrl(mockWebServer.url("/").toString().replaceAll("/$", ""));
 
-        mockDslEngine = new MockDslEngine();
+        AviatorDslEngine aviatorEngine = new AviatorDslEngine();
+        aviatorEngine.init();
+        dslEngine = aviatorEngine;
         objectMapper = new ObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        TriggerEvalFunction function = new TriggerEvalFunction(mockDslEngine, config);
+        TriggerEvalFunction function = new TriggerEvalFunction(dslEngine, config);
         harness = new KeyedOneInputStreamOperatorTestHarness<>(
                 new KeyedProcessOperator<>(function),
                 EnrichedEvent::getProfileId,
@@ -303,9 +306,7 @@ class TriggerEvalFunctionTest {
     void processElement_dslExpression_skipsWhenDslReturnsFalse() throws Exception {
         TriggerAction action = createEnabledAction("webhook", "{}");
         TriggerRule rule = createActiveRule("rule1", "proj1", TriggerFrequency.EVERY_TIME, List.of(action));
-        rule.setDsl("event.props.vip == true");
-
-        mockDslEngine.setResult("event.props.vip == true", false);
+        rule.setDsl("EQ(1, 2)");
 
         enqueueRulesResponse(List.of(rule));
 
@@ -320,9 +321,7 @@ class TriggerEvalFunctionTest {
     void processElement_dslExpression_matchesWhenDslReturnsTrue() throws Exception {
         TriggerAction action = createEnabledAction("webhook", "{}");
         TriggerRule rule = createActiveRule("rule1", "proj1", TriggerFrequency.EVERY_TIME, List.of(action));
-        rule.setDsl("event.props.vip == true");
-
-        mockDslEngine.setResult("event.props.vip == true", true);
+        rule.setDsl("EQ(1, 1)");
 
         enqueueRulesResponse(List.of(rule));
 
