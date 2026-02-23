@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getProjectMembers } from "@/services/project-service";
+import { getGroupsForProject } from "@/services/user-group-service";
 import { getEffectiveRole } from "@/services/user-service";
 import { ROLE_HIERARCHY } from "@/types/auth";
 import { InviteUserForm } from "../../users/invite-user-form";
@@ -16,8 +17,9 @@ export default async function UsersSettingsPage({
     redirect("/auth/signin");
   }
 
-  const [members, effectiveRole] = await Promise.all([
+  const [members, groups, effectiveRole] = await Promise.all([
     getProjectMembers(projectId),
+    getGroupsForProject(projectId),
     getEffectiveRole(session.user.id, projectId),
   ]);
 
@@ -38,7 +40,7 @@ export default async function UsersSettingsPage({
         <p className="page-subtitle">Manage project members and invite new users.</p>
       </div>
 
-      <InviteUserForm projectId={projectId} />
+      <InviteUserForm projectId={projectId} groups={groups.map((g) => ({ id: g.id, name: g.name, role: g.role }))} />
 
       <div className="ds-card">
         <div className="ds-card-header">Members</div>

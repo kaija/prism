@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { BackendAPIClient } from "@/lib/api-client";
 import { revalidatePath } from "next/cache";
+import prisma from "@/lib/prisma";
 
 interface ActionState {
   error: string | null;
@@ -27,8 +28,10 @@ export async function updateTimezoneAction(
   }
 
   try {
-    const api = new BackendAPIClient();
-    await api.setConfig(projectId, "timezone", timezone);
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { timezone },
+    });
     revalidatePath(`/projects/${projectId}/settings`);
     return { error: null, success: true };
   } catch {

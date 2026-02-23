@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS "User" (
     email           TEXT NOT NULL UNIQUE,
     name            TEXT,
     image           TEXT,
+    password        TEXT,
     "emailVerified" TIMESTAMPTZ,
     "createdAt"     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     "updatedAt"     TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -64,4 +65,11 @@ CREATE TABLE IF NOT EXISTS "UserGroupMember" (
     "userGroupId"   TEXT NOT NULL REFERENCES "UserGroup"(id) ON DELETE CASCADE,
     "userId"        TEXT NOT NULL REFERENCES "User"(id) ON DELETE CASCADE,
     UNIQUE("userGroupId", "userId")
+);
+
+CREATE TABLE IF NOT EXISTS "VerificationToken" (
+    identifier  TEXT NOT NULL,
+    token       TEXT NOT NULL UNIQUE,
+    expires     TIMESTAMPTZ NOT NULL,
+    UNIQUE(identifier, token)
 );

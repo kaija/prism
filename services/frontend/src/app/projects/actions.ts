@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { createProject } from "@/services/project-service";
+import { isSystemAdmin } from "@/lib/system-admin";
 
 export async function createProjectAction(
   _prevState: { error: string | null },
@@ -11,6 +12,10 @@ export async function createProjectAction(
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/auth/signin");
+  }
+
+  if (!session.user.email || !isSystemAdmin(session.user.email)) {
+    return { error: "Only system administrators can create projects." };
   }
 
   const name = formData.get("name") as string;

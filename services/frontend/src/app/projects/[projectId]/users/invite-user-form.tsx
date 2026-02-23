@@ -1,13 +1,39 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { inviteUserAction } from "./actions";
 
-export function InviteUserForm({ projectId }: { projectId: string }) {
+interface GroupOption {
+  id: string;
+  name: string;
+  role: string;
+}
+
+type AssignMode = "role" | "group";
+
+export function InviteUserForm({
+  projectId,
+  groups,
+}: {
+  projectId: string;
+  groups: GroupOption[];
+}) {
   const [state, formAction, isPending] = useActionState(inviteUserAction, {
     error: null,
     success: false,
   });
+  const [assignMode, setAssignMode] = useState<AssignMode>("role");
+
+  const selectStyle = {
+    padding: "8px 12px",
+    background: "var(--bg-input)",
+    border: "1px solid var(--border-color)",
+    borderRadius: "var(--radius-sm)",
+    color: "var(--text-default)",
+    fontFamily: "var(--font-family)",
+    fontSize: "var(--font-base)",
+  };
 
   return (
     <div
@@ -25,9 +51,10 @@ export function InviteUserForm({ projectId }: { projectId: string }) {
       </h3>
       <form
         action={formAction}
-        style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+        style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}
       >
         <input type="hidden" name="projectId" value={projectId} />
+        <input type="hidden" name="assignMode" value={assignMode} />
         <input
           name="email"
           type="email"
@@ -46,22 +73,34 @@ export function InviteUserForm({ projectId }: { projectId: string }) {
           }}
         />
         <select
-          name="role"
-          defaultValue="viewer"
-          style={{
-            padding: "8px 12px",
-            background: "var(--bg-input)",
-            border: "1px solid var(--border-color)",
-            borderRadius: "var(--radius-sm)",
-            color: "var(--text-default)",
-            fontFamily: "var(--font-family)",
-            fontSize: "var(--font-base)",
-          }}
+          value={assignMode}
+          onChange={(e) => setAssignMode(e.target.value as AssignMode)}
+          style={selectStyle}
+          aria-label="Assignment type"
         >
-          <option value="viewer">Viewer</option>
-          <option value="editor">Editor</option>
-          <option value="admin">Admin</option>
+          <option value="role">Individual Role</option>
+          <option value="group" disabled={groups.length === 0}>
+            Assign to Group
+          </option>
         </select>
+        {assignMode === "role" ? (
+          <select name="role" defaultValue="viewer" style={selectStyle}>
+            <option value="viewer">Viewer</option>
+            <option value="editor">Editor</option>
+            <option value="admin">Admin</option>
+          </select>
+        ) : (
+          <select name="groupId" required style={selectStyle}>
+            <option value="" disabled selected>
+              Select group…
+            </option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.name} ({g.role})
+              </option>
+            ))}
+          </select>
+        )}
         <button
           type="submit"
           disabled={isPending}

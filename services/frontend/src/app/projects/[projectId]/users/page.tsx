@@ -37,7 +37,7 @@ export default async function UsersPage({
         <p className="page-subtitle">Manage your project team, invite new members, and configure groups.</p>
       </div>
 
-      <InviteUserForm projectId={projectId} />
+      <InviteUserForm projectId={projectId} groups={groups.map((g) => ({ id: g.id, name: g.name, role: g.role }))} />
 
       {/* Member Table */}
       <div className="ds-card" style={{ marginBottom: 24 }}>
@@ -71,7 +71,7 @@ export default async function UsersPage({
         </div>
       </div>
 
-      {isOwner && <GroupManagement projectId={projectId} groups={groups} />}
+      {isOwner && <GroupManagement projectId={projectId} groups={groups} members={members} />}
     </div>
   );
 }

@@ -14,7 +14,7 @@ export default auth(async (req) => {
   const session = req.auth;
 
   // --- Public routes that don't require authentication ---
-  const publicPaths = ["/auth/signin", "/api/auth"];
+  const publicPaths = ["/auth/signin", "/auth/signup", "/auth/verify", "/api/auth"];
   if (publicPaths.some((p) => nextUrl.pathname.startsWith(p))) {
     return NextResponse.next();
   }

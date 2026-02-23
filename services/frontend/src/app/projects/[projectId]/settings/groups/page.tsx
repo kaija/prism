@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { getGroupsForProject } from "@/services/user-group-service";
+import { getProjectMembers } from "@/services/project-service";
 import { getEffectiveRole } from "@/services/user-service";
 import { ROLE_HIERARCHY } from "@/types/auth";
 import { GroupManagement } from "../../users/group-management";
@@ -16,8 +17,9 @@ export default async function GroupsSettingsPage({
     redirect("/auth/signin");
   }
 
-  const [groups, effectiveRole] = await Promise.all([
+  const [groups, members, effectiveRole] = await Promise.all([
     getGroupsForProject(projectId),
+    getProjectMembers(projectId),
     getEffectiveRole(session.user.id, projectId),
   ]);
 
@@ -38,7 +40,7 @@ export default async function GroupsSettingsPage({
         <p className="page-subtitle">Create and manage user groups for your project.</p>
       </div>
 
-      <GroupManagement projectId={projectId} groups={groups} />
+      <GroupManagement projectId={projectId} groups={groups} members={members} />
     </div>
   );
 }

@@ -1,45 +1,45 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useActionState } from "react";
 import { updateTimezoneAction } from "../actions";
+import { DropdownList, type DropdownGroup, type DropdownItem } from "@/components/dropdown-list";
 
 interface TimezoneFormProps {
   projectId: string;
   currentTimezone: string;
-  timezones: string[];
+  timezonesByRegion: Record<string, string[]>;
 }
 
-export function TimezoneForm({ projectId, currentTimezone, timezones }: TimezoneFormProps) {
+export function TimezoneForm({ projectId, currentTimezone, timezonesByRegion }: TimezoneFormProps) {
   const [state, action, pending] = useActionState(updateTimezoneAction, {
     error: null,
     success: false,
   });
+  const [selected, setSelected] = useState(currentTimezone);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const groups: DropdownGroup[] = Object.entries(timezonesByRegion).map(([region, zones]) => ({
+    label: region,
+    items: zones.map((tz) => ({ key: tz, label: tz.replace(/_/g, " ") })),
+  }));
+
+  function handleSelect(item: DropdownItem) {
+    setSelected(item.key);
+  }
 
   return (
     <div className="ds-card">
       <div className="ds-card-header">Project Timezone</div>
       <div className="ds-card-body">
-        <form action={action} style={{ display: "flex", gap: 10 }}>
+        <form ref={formRef} action={action} style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <input type="hidden" name="projectId" value={projectId} />
-          <select
-            name="timezone"
-            defaultValue={currentTimezone}
-            style={{
-              flex: 1,
-              padding: "8px 12px",
-              background: "var(--bg-input)",
-              border: "1px solid var(--border-color)",
-              borderRadius: "var(--radius-sm)",
-              color: "var(--text-default)",
-              fontFamily: "var(--font-family)",
-              fontSize: "var(--font-base)",
-              outline: "none",
-            }}
-          >
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>{tz}</option>
-            ))}
-          </select>
+          <input type="hidden" name="timezone" value={selected} />
+          <DropdownList
+            label={selected.replace(/_/g, " ")}
+            groups={groups}
+            onSelect={handleSelect}
+          />
           <button
             type="submit"
             disabled={pending}

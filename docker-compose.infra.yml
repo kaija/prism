@@ -46,6 +46,7 @@ services:
       - ./infra/docker/postgres/init.sql:/docker-entrypoint-initdb.d/001_init.sql
       - ./infra/docker/postgres/002_backend_api.sql:/docker-entrypoint-initdb.d/002_backend_api.sql
       - ./infra/docker/postgres/003_frontend.sql:/docker-entrypoint-initdb.d/003_frontend.sql
+      - ./infra/docker/postgres/004_auth_credentials.sql:/docker-entrypoint-initdb.d/004_auth_credentials.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U prism"]
       interval: 5s
