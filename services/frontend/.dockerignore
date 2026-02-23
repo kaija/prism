@@ -1,0 +1,12 @@
+node_modules
+.next
+.env*
+*.tsbuildinfo
+next-env.d.ts
+coverage
+.git
+src/generated/prisma
+vitest.config.ts
+**/*.test.ts
+**/*.test.tsx
+**/*.property.test.ts

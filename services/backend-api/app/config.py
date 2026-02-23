@@ -31,6 +31,22 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
+    @property
+    def sqlalchemy_dsn(self) -> str:
+        """Build a SQLAlchemy async DSN (asyncpg driver)."""
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
+    @property
+    def sqlalchemy_sync_dsn(self) -> str:
+        """Build a synchronous SQLAlchemy DSN for Alembic migrations."""
+        return (
+            f"postgresql://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
+
     # --- DuckDB ---
     duckdb_path: str = "/data/duckdb/prism.duckdb"
 

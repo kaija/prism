@@ -26,6 +26,13 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
+# Copy Alembic config and migrations
+COPY alembic.ini ./alembic.ini
+COPY alembic/ ./alembic/
+
+# Copy entrypoint
+COPY entrypoint.sh ./entrypoint.sh
+
 # Copy application code
 COPY app/ ./app/
 
@@ -48,5 +55,5 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 # Graceful shutdown
 STOPSIGNAL SIGTERM
 
-# Run the application
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+# Run migrations then start the application
+CMD ["./entrypoint.sh"]
