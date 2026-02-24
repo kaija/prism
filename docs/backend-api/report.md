@@ -1,0 +1,30 @@
+- reporting
+	- there are few default reports. trend/attribution/cohort
+	- dynamic schema
+		- event schema, able to calculate the new event attribute by using the DSL formula
+		- profile schema, able to calculate the new profile attribute by calculate the all event data by DSL formula, or converted from the other profile attribute.
+		- support aggregation of event data like, count/sum/count unique/last event/first event/min/max/mean/average/top
+		- support rich function like ceil/lower/upper/add/sub/mul/div
+		- support time function like date_format/date_diff/weekday/
+		- support format conversion like string/int/bool
+	- filter
+		- timeframe, start and end time, include relative and absolute time select
+		- able to select all event or select specific events
+		- able to support simple event, profile attribute with condition filter such as string is, contain, start with, end with ( not ), boolean true/false compare, number equal/larger/less/ not equal
+		- able to support multiple constrain and / or logic 
+	- profile summary
+		- support filter group of profile
+		- display profile by table with custom select profile attribute/dynamic attribute
+		- display profile 
+	- event summary
+		- Display event in timeline bar/line chart
+		- Able to filter event by above filter constrain
+    - segment management
+        - a profile filter constrain
+        - user able to set multiple and/or logic and select the profile attribute(property)
+        - user able to define different segment constrain for different purpose
+    - trend report
+        - user able to select the segment profile data
+        - user able to select different compare / measure by columns to display
+    - attribution report ...
+    - cohort report ...

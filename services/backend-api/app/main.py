@@ -26,6 +26,7 @@ from app.routers import (
     profile_router,
     report_router,
     reporting_config_router,
+    segment_router,
     trigger_router,
 )
 from app.routers import schema_router
@@ -36,6 +37,7 @@ from app.services.query_builder import QueryBuilderService
 from app.services.report_service import ReportService
 from app.services.schema_cache import SchemaCache
 from app.services.schema_service import SchemaService
+from app.services.segment_service import SegmentService
 from app.services.trigger_service import TriggerService
 
 logger = structlog.get_logger()
@@ -82,6 +84,7 @@ async def lifespan(app: FastAPI):
         duckdb_repo=duckdb_repo,
     )
     schema_service = SchemaService(repo=pg_repo, cache=schema_cache)
+    segment_service = SegmentService(pg_repo)
 
     # --- Store on app.state ---
     app.state.pg_repo = pg_repo
@@ -93,6 +96,7 @@ async def lifespan(app: FastAPI):
     app.state.profile_summary_service = profile_summary_service
     app.state.job_service = job_service
     app.state.schema_service = schema_service
+    app.state.segment_service = segment_service
 
     logger.info("startup_complete")
     yield
@@ -132,3 +136,4 @@ app.include_router(flink_config_router.router)
 app.include_router(health_router.router)
 app.include_router(dsl_router.router)
 app.include_router(schema_router.router)
+app.include_router(segment_router.router)
