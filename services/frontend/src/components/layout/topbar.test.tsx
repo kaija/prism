@@ -10,32 +10,16 @@ describe("Topbar", () => {
     image: null,
   };
 
-  it("renders the brand name", () => {
+  it("renders category tabs", () => {
     render(<Topbar user={defaultUser} />);
-    expect(screen.getByText("Prism Analytics")).toBeDefined();
+    expect(screen.getByText("Dashboards")).toBeDefined();
+    expect(screen.getByText("Events")).toBeDefined();
+    expect(screen.getByText("Reports")).toBeDefined();
   });
 
-  it("renders the search input", () => {
+  it("renders user name", () => {
     render(<Topbar user={defaultUser} />);
-    const search = screen.getByLabelText("Search");
-    expect(search).toBeDefined();
-    expect(search.getAttribute("type")).toBe("search");
-  });
-
-  it("renders user email", () => {
-    render(<Topbar user={defaultUser} />);
-    expect(screen.getByText("alice@example.com")).toBeDefined();
-  });
-
-  it("renders role badge when userRole is provided", () => {
-    render(<Topbar user={defaultUser} userRole="admin" />);
-    expect(screen.getByText("admin")).toBeDefined();
-  });
-
-  it("does not render role badge when userRole is omitted", () => {
-    render(<Topbar user={defaultUser} />);
-    expect(screen.queryByText("viewer")).toBeNull();
-    expect(screen.queryByText("admin")).toBeNull();
+    expect(screen.getByText("Alice")).toBeDefined();
   });
 
   it("renders avatar fallback with first letter when no image", () => {
@@ -52,26 +36,50 @@ describe("Topbar", () => {
   });
 
   describe("theme toggle", () => {
-    it("shows moon icon in light mode and calls onThemeToggle", () => {
+    it("calls onThemeToggle when clicked in light mode", () => {
       const toggle = vi.fn();
       render(<Topbar user={defaultUser} theme="light" onThemeToggle={toggle} />);
       const btn = screen.getByLabelText("Switch to dark mode");
-      expect(btn.textContent).toBe("🌙");
       fireEvent.click(btn);
       expect(toggle).toHaveBeenCalledOnce();
     });
 
-    it("shows sun icon in dark mode", () => {
+    it("shows switch to light mode label in dark mode", () => {
       render(<Topbar user={defaultUser} theme="dark" />);
       const btn = screen.getByLabelText("Switch to light mode");
-      expect(btn.textContent).toBe("☀️");
+      expect(btn).toBeDefined();
     });
   });
 
-  it("allows typing in the search input", () => {
+  it("renders hamburger menu toggle", () => {
     render(<Topbar user={defaultUser} />);
-    const search = screen.getByLabelText("Search") as HTMLInputElement;
-    fireEvent.change(search, { target: { value: "test query" } });
-    expect(search.value).toBe("test query");
+    expect(screen.getByLabelText("Toggle sidebar")).toBeDefined();
+  });
+
+  it("calls onMenuToggle when hamburger is clicked", () => {
+    const menuToggle = vi.fn();
+    render(<Topbar user={defaultUser} onMenuToggle={menuToggle} />);
+    fireEvent.click(screen.getByLabelText("Toggle sidebar"));
+    expect(menuToggle).toHaveBeenCalledOnce();
+  });
+
+  it("shows user dropdown on user button click", () => {
+    render(<Topbar user={defaultUser} userRole="admin" projectId="proj-1" />);
+    fireEvent.click(screen.getByLabelText("User menu"));
+    expect(screen.getByText("alice@example.com")).toBeDefined();
+    expect(screen.getByText("admin")).toBeDefined();
+  });
+
+  it("highlights active category tab", () => {
+    render(<Topbar user={defaultUser} activeCategory="reports" />);
+    const reportsTab = screen.getByText("Reports").closest("button");
+    expect(reportsTab?.getAttribute("aria-selected")).toBe("true");
+  });
+
+  it("calls onCategoryChange when a tab is clicked", () => {
+    const onChange = vi.fn();
+    render(<Topbar user={defaultUser} onCategoryChange={onChange} />);
+    fireEvent.click(screen.getByText("Events"));
+    expect(onChange).toHaveBeenCalledWith("events");
   });
 });

@@ -1,75 +1,73 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
-import { Sidebar, NAV_ITEMS } from "./sidebar";
+import { render, screen } from "@testing-library/react";
+import { Sidebar } from "./sidebar";
 import type { Role } from "@/types/auth";
+
+// Mock next/navigation
+import { vi } from "vitest";
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/projects/proj-1/dashboard",
+}));
 
 describe("Sidebar", () => {
   const defaultProps = {
     projectId: "proj-1",
-    activeRoute: "dashboard",
-    userRole: "viewer" as Role,
+    userRole: "admin" as Role,
+    collapsed: false,
+    activeCategory: "dashboards",
   };
 
-  it("renders the 'All Projects' back link", () => {
+  it("renders the Prism logo link", () => {
     render(<Sidebar {...defaultProps} />);
-    expect(screen.getByText("← All Projects")).toBeDefined();
+    expect(screen.getByText("Prism")).toBeDefined();
   });
 
-  describe("role-based nav visibility", () => {
-    it("shows only viewer-level links for viewer role", () => {
-      render(<Sidebar {...defaultProps} userRole="viewer" />);
-      expect(screen.getByText("Dashboard")).toBeDefined();
-      expect(screen.getByText("Reports")).toBeDefined();
-      expect(screen.getByText("Profiles")).toBeDefined();
-      expect(screen.queryByText("Settings")).toBeNull();
-      expect(screen.queryByText("Users")).toBeNull();
-    });
-
-    it("shows only viewer-level links for editor role", () => {
-      render(<Sidebar {...defaultProps} userRole="editor" />);
-      expect(screen.getByText("Dashboard")).toBeDefined();
-      expect(screen.getByText("Reports")).toBeDefined();
-      expect(screen.getByText("Profiles")).toBeDefined();
-      expect(screen.queryByText("Settings")).toBeNull();
-      expect(screen.queryByText("Users")).toBeNull();
-    });
-
-    it("shows all links including Settings and Users for admin role", () => {
-      render(<Sidebar {...defaultProps} userRole="admin" />);
-      expect(screen.getByText("Dashboard")).toBeDefined();
-      expect(screen.getByText("Reports")).toBeDefined();
-      expect(screen.getByText("Profiles")).toBeDefined();
-      expect(screen.getByText("Settings")).toBeDefined();
-      expect(screen.getByText("Users")).toBeDefined();
-    });
-
-    it("shows all links for owner role", () => {
-      render(<Sidebar {...defaultProps} userRole="owner" />);
-      NAV_ITEMS.forEach((item) => {
-        expect(screen.getByText(item.label)).toBeDefined();
-      });
-    });
-  });
-
-  it("generates correct href for each nav link", () => {
-    render(<Sidebar {...defaultProps} userRole="owner" />);
-    const dashboardLink = screen.getByText("Dashboard").closest("a");
-    expect(dashboardLink?.getAttribute("href")).toBe("/projects/proj-1/dashboard");
-    const usersLink = screen.getByText("Users").closest("a");
-    expect(usersLink?.getAttribute("href")).toBe("/projects/proj-1/users");
-  });
-
-  it("renders mobile toggle button", () => {
+  it("renders the 'All Projects' footer link", () => {
     render(<Sidebar {...defaultProps} />);
-    const toggle = screen.getByLabelText("Close sidebar");
-    expect(toggle).toBeDefined();
+    expect(screen.getByText("All Projects")).toBeDefined();
   });
 
-  it("toggles mobile sidebar state on button click", () => {
-    render(<Sidebar {...defaultProps} />);
-    const toggle = screen.getByLabelText("Close sidebar");
-    fireEvent.click(toggle);
-    // After click, collapsed = true, label changes to "Open sidebar"
-    expect(screen.getByLabelText("Open sidebar")).toBeDefined();
+  it("renders section items for the active category", () => {
+    render(<Sidebar {...defaultProps} activeCategory="dashboards" />);
+    expect(screen.getByText("Main")).toBeDefined();
+  });
+
+  it("renders reports section items when reports category is active", () => {
+    render(<Sidebar {...defaultProps} activeCategory="reports" />);
+    expect(screen.getByText("Trend")).toBeDefined();
+    expect(screen.getByText("Attribution")).toBeDefined();
+    expect(screen.getByText("Cohort")).toBeDefined();
+  });
+
+  it("renders configuration sections for admin role", () => {
+    render(<Sidebar {...defaultProps} activeCategory="configuration" userRole="admin" />);
+    expect(screen.getByText("Access")).toBeDefined();
+    expect(screen.getByText("Project")).toBeDefined();
+    expect(screen.getByText("Users")).toBeDefined();
+    expect(screen.getByText("Settings")).toBeDefined();
+  });
+
+  it("hides configuration sections for viewer role", () => {
+    render(<Sidebar {...defaultProps} activeCategory="configuration" userRole="viewer" />);
+    expect(screen.queryByText("Users")).toBeNull();
+    expect(screen.queryByText("Settings")).toBeNull();
+  });
+
+  it("generates correct href for nav links", () => {
+    render(<Sidebar {...defaultProps} activeCategory="dashboards" />);
+    const mainLink = screen.getByText("Main").closest("a");
+    expect(mainLink?.getAttribute("href")).toBe("/projects/proj-1/dashboard");
+  });
+
+  it("applies collapsed transform when collapsed is true", () => {
+    const { container } = render(<Sidebar {...defaultProps} collapsed={true} />);
+    const aside = container.querySelector("aside.sidebar");
+    expect(aside?.getAttribute("style")).toContain("translateX(-100%)");
+  });
+
+  it("applies no transform when collapsed is false", () => {
+    const { container } = render(<Sidebar {...defaultProps} collapsed={false} />);
+    const aside = container.querySelector("aside.sidebar");
+    expect(aside?.getAttribute("style")).toContain("translateX(0)");
   });
 });

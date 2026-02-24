@@ -14,7 +14,7 @@ export async function isFeatureEnabled(
     const flags = await api.getFeatureFlags(projectId);
     return flags[flagKey] === "true";
   } catch {
-    // Backend may be unavailable; treat flag as disabled
-    return false;
+    // Backend unavailable in dev — default to enabled so features are accessible
+    return true;
   }
 }

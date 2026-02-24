@@ -6,11 +6,11 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    Real,
     String,
     Text,
     func,
 )
+from sqlalchemy.types import REAL
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -60,6 +60,8 @@ class AttributeDefinition(Base):
     entity_type: Mapped[str] = mapped_column(String(20), nullable=False)
     attr_name: Mapped[str] = mapped_column(String(128), nullable=False)
     attr_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text)
+    data_type: Mapped[str] = mapped_column(String(50), nullable=False, server_default="string")
     indexed: Mapped[bool] = mapped_column(Boolean, server_default="false")
     computed: Mapped[bool] = mapped_column(Boolean, server_default="false")
     formula: Mapped[str | None] = mapped_column(Text)
@@ -161,7 +163,7 @@ class RequestLog(Base):
     method: Mapped[str] = mapped_column(String(10), nullable=False)
     path: Mapped[str] = mapped_column(String(512), nullable=False)
     status_code: Mapped[int] = mapped_column(Integer, nullable=False)
-    duration_ms: Mapped[float] = mapped_column(Real, nullable=False)
+    duration_ms: Mapped[float] = mapped_column(REAL, nullable=False)
     created_at: Mapped[datetime | None] = mapped_column(server_default=func.now())
 
     __table_args__ = (Index("idx_request_logs_project", "project_id", "created_at"),)

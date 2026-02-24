@@ -6,6 +6,7 @@ import type { TopbarUser } from "./topbar";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/projects/proj-1/dashboard",
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 function renderAppShell(overrides: Record<string, unknown> = {}) {
@@ -17,7 +18,6 @@ function renderAppShell(overrides: Record<string, unknown> = {}) {
 
   const props = {
     projectId: "proj-1",
-    activeRoute: "dashboard",
     userRole: "admin" as const,
     user: defaultUser,
     ...overrides,
@@ -35,6 +35,7 @@ function renderAppShell(overrides: Record<string, unknown> = {}) {
 beforeEach(() => {
   localStorage.clear();
   document.documentElement.style.cssText = "";
+  document.documentElement.removeAttribute("data-theme");
 });
 
 describe("AppShell", () => {
@@ -43,37 +44,35 @@ describe("AppShell", () => {
     expect(screen.getByTestId("child-content").textContent).toBe("Hello World");
   });
 
-  it("renders the sidebar with navigation links", () => {
+  it("renders the sidebar with Prism logo", () => {
     renderAppShell();
-    expect(screen.getByText("Dashboard")).toBeDefined();
-    expect(screen.getByText("Reports")).toBeDefined();
-    expect(screen.getByText("Profiles")).toBeDefined();
+    expect(screen.getByText("Prism")).toBeDefined();
   });
 
-  it("renders the topbar with brand and user info", () => {
+  it("renders category tabs in the topbar", () => {
     renderAppShell();
-    expect(screen.getByText("Prism Analytics")).toBeDefined();
-    expect(screen.getByText("alice@example.com")).toBeDefined();
+    // "Dashboards" appears in both sidebar section and topbar tab
+    expect(screen.getAllByText("Dashboards").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Events").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Reports").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders the search input from topbar", () => {
+  it("renders user name in the topbar", () => {
     renderAppShell();
-    expect(screen.getByLabelText("Search")).toBeDefined();
+    expect(screen.getByText("Alice")).toBeDefined();
   });
 
   it("theme toggle in topbar switches theme", () => {
     renderAppShell();
-    // Default is light mode
-    const toggleBtn = screen.getByLabelText("Switch to dark mode");
+    // Default is dark mode in the provider
+    const toggleBtn = screen.getByLabelText("Switch to light mode");
     fireEvent.click(toggleBtn);
-    // After toggle, should switch to dark mode
-    expect(screen.getByLabelText("Switch to light mode")).toBeDefined();
+    expect(screen.getByLabelText("Switch to dark mode")).toBeDefined();
   });
 
-  it("passes userRole to sidebar for role-based nav filtering", () => {
-    renderAppShell({ userRole: "viewer" });
-    expect(screen.getByText("Dashboard")).toBeDefined();
-    expect(screen.queryByText("Settings")).toBeNull();
-    expect(screen.queryByText("Users")).toBeNull();
+  it("renders sidebar sections for the active category", () => {
+    renderAppShell();
+    // Default active category is dashboards based on pathname
+    expect(screen.getByText("Main")).toBeDefined();
   });
 });

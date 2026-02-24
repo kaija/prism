@@ -56,8 +56,9 @@ describe("isFeatureEnabled", () => {
     );
   });
 
-  it("propagates API errors", async () => {
+  it("returns true when API errors occur (dev fallback)", async () => {
     globalThis.fetch = mockFetch(500);
-    await expect(isFeatureEnabled("proj1", "flag")).rejects.toThrow();
+    const result = await isFeatureEnabled("proj1", "flag");
+    expect(result).toBe(true);
   });
 });

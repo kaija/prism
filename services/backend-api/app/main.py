@@ -2,6 +2,7 @@
 
 from contextlib import asynccontextmanager
 
+import redis.asyncio as aioredis
 import structlog
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
@@ -27,11 +28,14 @@ from app.routers import (
     reporting_config_router,
     trigger_router,
 )
+from app.routers import schema_router
 from app.services.config_service import ConfigService
 from app.services.job_service import JobService
 from app.services.profile_summary_service import ProfileSummaryService
 from app.services.query_builder import QueryBuilderService
 from app.services.report_service import ReportService
+from app.services.schema_cache import SchemaCache
+from app.services.schema_service import SchemaService
 from app.services.trigger_service import TriggerService
 
 logger = structlog.get_logger()
@@ -58,6 +62,10 @@ async def lifespan(app: FastAPI):
         global_max=settings.max_service_concurrent_reports,
     )
 
+    # --- Redis ---
+    redis_client = aioredis.from_url(settings.redis_url, decode_responses=False)
+    schema_cache = SchemaCache(redis_client)
+
     # --- Services ---
     query_builder = QueryBuilderService()
     config_service = ConfigService(pg_repo)
@@ -73,6 +81,7 @@ async def lifespan(app: FastAPI):
         query_builder=query_builder,
         duckdb_repo=duckdb_repo,
     )
+    schema_service = SchemaService(repo=pg_repo, cache=schema_cache)
 
     # --- Store on app.state ---
     app.state.pg_repo = pg_repo
@@ -83,6 +92,7 @@ async def lifespan(app: FastAPI):
     app.state.report_service = report_service
     app.state.profile_summary_service = profile_summary_service
     app.state.job_service = job_service
+    app.state.schema_service = schema_service
 
     logger.info("startup_complete")
     yield
@@ -90,6 +100,7 @@ async def lifespan(app: FastAPI):
     # --- Shutdown ---
     logger.info("shutting_down")
 
+    await redis_client.aclose()
     await pg_pool.close()
     duckdb_conn.close()
 
@@ -120,3 +131,4 @@ app.include_router(job_router.router)
 app.include_router(flink_config_router.router)
 app.include_router(health_router.router)
 app.include_router(dsl_router.router)
+app.include_router(schema_router.router)

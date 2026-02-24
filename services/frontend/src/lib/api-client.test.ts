@@ -36,9 +36,9 @@ describe("BackendAPIClient", () => {
       );
     });
 
-    it("falls back to BACKEND_API_URL env var", () => {
-      const original = process.env.BACKEND_API_URL;
-      process.env.BACKEND_API_URL = "http://env-api:3000";
+    it("falls back to NEXT_PUBLIC_BACKEND_API_URL env var", () => {
+      const original = process.env.NEXT_PUBLIC_BACKEND_API_URL;
+      process.env.NEXT_PUBLIC_BACKEND_API_URL = "http://env-api:3000";
       const c = new BackendAPIClient();
       globalThis.fetch = mockFetch(200, {});
       c.getConfig("proj1");
@@ -46,7 +46,7 @@ describe("BackendAPIClient", () => {
         "http://env-api:3000/projects/proj1/config",
         expect.any(Object),
       );
-      process.env.BACKEND_API_URL = original;
+      process.env.NEXT_PUBLIC_BACKEND_API_URL = original;
     });
   });
 
@@ -324,6 +324,103 @@ describe("BackendAPIClient", () => {
       await client.deleteTrigger("proj1", "r1");
       expect(globalThis.fetch).toHaveBeenCalledWith(
         `${BASE_URL}/projects/proj1/triggers/r1`,
+        expect.objectContaining({ method: "DELETE" }),
+      );
+    });
+  });
+
+  describe("saveReport", () => {
+    it("posts save report request and returns saved report", async () => {
+      const request = {
+        name: "My Trend Report",
+        report_type: "trend" as const,
+        query_params: { interval: "day", segments: [] },
+      };
+      const saved = {
+        id: "rpt-1",
+        project_id: "proj1",
+        name: "My Trend Report",
+        report_type: "trend",
+        query_params: { interval: "day", segments: [] },
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+      globalThis.fetch = mockFetch(200, saved);
+      const result = await client.saveReport("proj1", request);
+      expect(result).toEqual(saved);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${BASE_URL}/projects/proj1/saved-reports`,
+        expect.objectContaining({
+          method: "POST",
+          body: JSON.stringify(request),
+        }),
+      );
+    });
+  });
+
+  describe("listReports", () => {
+    it("fetches all reports for a project", async () => {
+      const reports = [
+        {
+          id: "rpt-1",
+          project_id: "proj1",
+          name: "Report A",
+          report_type: "trend",
+          query_params: {},
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-02T00:00:00Z",
+        },
+        {
+          id: "rpt-2",
+          project_id: "proj1",
+          name: "Report B",
+          report_type: "cohort",
+          query_params: {},
+          created_at: "2024-01-01T00:00:00Z",
+          updated_at: "2024-01-01T00:00:00Z",
+        },
+      ];
+      globalThis.fetch = mockFetch(200, reports);
+      const result = await client.listReports("proj1");
+      expect(result).toEqual(reports);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${BASE_URL}/projects/proj1/saved-reports`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            "Content-Type": "application/json",
+          }),
+        }),
+      );
+    });
+  });
+
+  describe("getReport", () => {
+    it("fetches a single report by ID", async () => {
+      const report = {
+        id: "rpt-1",
+        project_id: "proj1",
+        name: "My Report",
+        report_type: "trend",
+        query_params: { interval: "week" },
+        created_at: "2024-01-01T00:00:00Z",
+        updated_at: "2024-01-01T00:00:00Z",
+      };
+      globalThis.fetch = mockFetch(200, report);
+      const result = await client.getReport("proj1", "rpt-1");
+      expect(result).toEqual(report);
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${BASE_URL}/projects/proj1/saved-reports/rpt-1`,
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe("deleteReport", () => {
+    it("sends DELETE for a saved report", async () => {
+      globalThis.fetch = mockFetch(204);
+      await client.deleteReport("proj1", "rpt-1");
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        `${BASE_URL}/projects/proj1/saved-reports/rpt-1`,
         expect.objectContaining({ method: "DELETE" }),
       );
     });

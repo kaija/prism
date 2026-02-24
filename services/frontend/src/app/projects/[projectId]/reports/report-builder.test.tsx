@@ -4,11 +4,13 @@ import { useReportStore } from "@/stores/report-store";
 
 const mockSubmitReport = vi.fn();
 const mockGetJobStatus = vi.fn();
+const mockSaveReport = vi.fn();
 
 vi.mock("@/lib/api-client", () => ({
   BackendAPIClient: class {
     submitReport = mockSubmitReport;
     getJobStatus = mockGetJobStatus;
+    saveReport = mockSaveReport;
   },
 }));
 
@@ -19,6 +21,7 @@ describe("ReportBuilder", () => {
     useReportStore.getState().reset();
     mockSubmitReport.mockReset();
     mockGetJobStatus.mockReset();
+    mockSaveReport.mockReset();
   });
 
   afterEach(() => {
@@ -44,12 +47,30 @@ describe("ReportBuilder", () => {
     expect(useReportStore.getState().reportType).toBe("cohort");
   });
 
-  it("renders all filter components", () => {
+  it("renders common filter components for trend report", () => {
     render(<ReportBuilder projectId="proj-1" />);
     expect(screen.getByText("Timeframe")).toBeDefined();
     expect(screen.getByText("Events")).toBeDefined();
+  });
+
+  it("renders trend-specific filter components", () => {
+    render(<ReportBuilder projectId="proj-1" />);
+    expect(screen.getByText("Performed by")).toBeDefined();
+    expect(screen.getByText("Interval")).toBeDefined();
+    expect(screen.getByText("Compare by")).toBeDefined();
+    expect(screen.getByText("Measure by")).toBeDefined();
+  });
+
+  it("renders Filters and Aggregation for non-trend report types", () => {
+    render(<ReportBuilder projectId="proj-1" />);
+    fireEvent.click(screen.getByRole("tab", { name: "Attribution" }));
     expect(screen.getByText("Filters")).toBeDefined();
     expect(screen.getByText("Aggregation")).toBeDefined();
+  });
+
+  it("renders Save Report button for trend report", () => {
+    render(<ReportBuilder projectId="proj-1" />);
+    expect(screen.getByText("Save Report")).toBeDefined();
   });
 
   it("renders Run Report button", () => {

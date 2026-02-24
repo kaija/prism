@@ -61,7 +61,7 @@ describe("DashboardPage", () => {
     mockGetConfig.mockRejectedValue(new Error("Network error"));
     render(<DashboardPage />);
     await waitFor(() => {
-      expect(screen.getByText("Unable to load metrics")).toBeDefined();
+      expect(screen.getByText("Unable to load metrics from backend")).toBeDefined();
     });
   });
 

@@ -6,8 +6,9 @@ WORKDIR /build
 # Install build dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Copy project metadata and install dependencies
+# Copy project metadata and source, then install package + dependencies
 COPY pyproject.toml .
+COPY app/ ./app/
 RUN pip install --no-cache-dir --prefix=/install .
 
 # ---- Stage 2: Production ----
@@ -35,6 +36,9 @@ COPY entrypoint.sh ./entrypoint.sh
 
 # Copy application code
 COPY app/ ./app/
+
+# Ensure /app is on the Python path so alembic can find the app module
+ENV PYTHONPATH=/app
 
 # Ensure DuckDB data directory is writable
 RUN mkdir -p /data/duckdb && chown -R appuser:appuser /data/duckdb

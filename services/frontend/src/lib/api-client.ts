@@ -11,6 +11,8 @@ import type {
   TriggerSetting,
   TriggerCreate,
   TriggerUpdate,
+  SavedReport,
+  SaveReportRequest,
 } from "@/types/api";
 
 export class APIError extends Error {
@@ -28,7 +30,10 @@ export class BackendAPIClient {
 
   constructor(baseUrl?: string) {
     this.baseUrl =
-      baseUrl ?? process.env.BACKEND_API_URL ?? "http://localhost:8000";
+      baseUrl ??
+      process.env.NEXT_PUBLIC_BACKEND_API_URL ??
+      process.env.BACKEND_API_URL ??
+      "http://localhost:8001";
   }
 
   private async request<T>(
@@ -111,6 +116,48 @@ export class BackendAPIClient {
 
   async getJobStatus(jobId: string): Promise<JobStatus> {
     return this.request<JobStatus>(`/jobs/${jobId}`);
+  }
+
+  // ─── Saved Reports ─────────────────────────────────────────
+
+  async saveReport(
+    projectId: string,
+    request: SaveReportRequest,
+  ): Promise<SavedReport> {
+    return this.request<SavedReport>(
+      `/projects/${projectId}/saved-reports`,
+      {
+        method: "POST",
+        body: JSON.stringify(request),
+      },
+    );
+  }
+
+  async listReports(projectId: string): Promise<SavedReport[]> {
+    return this.request<SavedReport[]>(
+      `/projects/${projectId}/saved-reports`,
+    );
+  }
+
+  async getReport(
+    projectId: string,
+    reportId: string,
+  ): Promise<SavedReport> {
+    return this.request<SavedReport>(
+      `/projects/${projectId}/saved-reports/${reportId}`,
+    );
+  }
+
+  async deleteReport(
+    projectId: string,
+    reportId: string,
+  ): Promise<void> {
+    return this.request<void>(
+      `/projects/${projectId}/saved-reports/${reportId}`,
+      {
+        method: "DELETE",
+      },
+    );
   }
 
   // ─── Profiles ───────────────────────────────────────────────

@@ -9,6 +9,11 @@ export interface ReportRequest {
   filters?: ConditionGroup;
   aggregation: Aggregation;
   group_by?: string[];
+  segments?: string[];
+  interval?: IntervalUnit;
+  compare_by?: string[];
+  measure_by?: string[];
+  comparison_timeframe?: Timeframe;
 }
 
 export interface Timeframe {
@@ -203,3 +208,54 @@ export interface CohortRow {
   values: (number | null)[]; // retention % per period, null if N/A
 }
 
+
+// ─── Interval Types ──────────────────────────────────────────
+
+export type IntervalUnit = "hour" | "day" | "week" | "month";
+
+// ─── Saved Report Types ─────────────────────────────────────
+
+export interface SavedReport {
+  id: string;
+  project_id: string;
+  name: string;
+  report_type: "trend" | "attribution" | "cohort";
+  query_params: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SaveReportRequest {
+  name: string;
+  report_type: "trend" | "attribution" | "cohort";
+  query_params: Record<string, unknown>;
+}
+
+// ─── Trend Table Types ──────────────────────────────────────
+
+export interface TrendTableColumn {
+  key: string;
+  label: string;
+}
+
+export interface TrendTableRow {
+  dimensionValue: string;
+  values: Record<string, number | string>;
+}
+
+// ─── Filter Option Types ────────────────────────────────────
+
+export interface SegmentOption {
+  id: string;
+  label: string;
+}
+
+export interface DimensionOption {
+  key: string;
+  label: string;
+}
+
+export interface MeasureMetric {
+  key: string;
+  label: string;
+}

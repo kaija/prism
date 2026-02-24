@@ -28,6 +28,16 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+// Mock bcryptjs
+vi.mock("bcryptjs", () => ({
+  default: { compare: vi.fn() },
+}));
+
+// Mock system-admin
+vi.mock("@/lib/system-admin", () => ({
+  isSystemAdmin: () => false,
+}));
+
 // Mock next-auth so we can capture the config object
 vi.mock("next-auth", () => {
   return {
@@ -48,6 +58,10 @@ vi.mock("next-auth/providers/google", () => ({
   default: () => ({ id: "google", name: "Google" }),
 }));
 
+vi.mock("next-auth/providers/credentials", () => ({
+  default: () => ({ id: "credentials", name: "Credentials" }),
+}));
+
 vi.mock("@auth/prisma-adapter", () => ({
   PrismaAdapter: () => ({}),
 }));
@@ -58,6 +72,7 @@ vi.mock("@auth/prisma-adapter", () => ({
 
 type SignInCallback = (params: {
   user: { email?: string | null; name?: string | null; id?: string };
+  account?: { provider: string } | null;
 }) => Promise<boolean>;
 
 let signInCallback: SignInCallback;
@@ -107,6 +122,7 @@ describe("Property 1: New User Default Role", () => {
 
           const result = await signInCallback({
             user: { email, name: name ?? undefined },
+            account: { provider: "google" },
           });
 
           // signIn should return true so the adapter creates the user
@@ -125,11 +141,13 @@ describe("Property 1: New User Default Role", () => {
   it("rejects sign-in when email is missing (null/undefined)", async () => {
     const result = await signInCallback({
       user: { email: null },
+      account: null,
     });
     expect(result).toBe(false);
 
     const result2 = await signInCallback({
       user: { email: undefined },
+      account: null,
     });
     expect(result2).toBe(false);
   });
@@ -171,6 +189,7 @@ describe("Property 2: Existing User Sign-In Idempotence", () => {
 
             const result = await signInCallback({
               user: { email, name: name ?? undefined },
+              account: { provider: "google" },
             });
 
             // signIn should return true
@@ -182,7 +201,6 @@ describe("Property 2: Existing User Sign-In Idempotence", () => {
             });
 
             // The callback should NOT have called create or any mutation
-            // (PrismaAdapter skips creation for existing users)
             expect(mockCreate).not.toHaveBeenCalled();
           }
         ),

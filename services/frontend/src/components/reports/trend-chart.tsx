@@ -16,22 +16,43 @@ echarts.use([LineChart, GridComponent, TooltipComponent, LegendComponent, Canvas
 const PRIMARY = "#4a77f0";
 const SECONDARY = "#fdc530";
 const GRID_COLOR = "#eff0f6";
+const PALETTE = [PRIMARY, SECONDARY, "#34c38f", "#e74c3c", "#9b59b6"];
 
-function formatDate(ts: number): string {
+export function formatDate(ts: number): string {
   const d = new Date(ts);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export function TrendChart({ data }: { data: TrendResult }) {
-  if (!data.series.length) {
-    return (
-      <div style={{ padding: 32, textAlign: "center", color: "#8e99a4", fontFamily: "'Roboto', sans-serif" }}>
-        No trend data available.
-      </div>
-    );
-  }
+/** Check whether a series label represents a comparison series */
+export function isComparisonLabel(label: string): boolean {
+  return label.toLowerCase().includes("comparison");
+}
 
-  // Group by label for multi-series support
+export interface ChartSeries {
+  name: string;
+  type: "line";
+  data: number[];
+  smooth: boolean;
+  symbol: string;
+  symbolSize: number;
+  lineStyle: { width: number; color: string; type: "solid" | "dashed"; opacity?: number };
+  itemStyle: { color: string; opacity?: number };
+  areaStyle: { color: unknown; opacity?: number };
+}
+
+/**
+ * Build ECharts option from TrendResult data.
+ * Exported for testability (property tests).
+ *
+ * Supports:
+ * - Single series (no labels → default "Value")
+ * - Multi-series (each unique label gets its own series)
+ * - Comparison series (labels containing "comparison" → dashed line, reduced opacity)
+ */
+export function buildChartOption(data: TrendResult): echarts.EChartsCoreOption | null {
+  if (!data.series.length) return null;
+
+  // Group data points by label
   const seriesMap = new Map<string, { x: string[]; y: number[] }>();
   for (const pt of data.series) {
     const key = pt.label ?? "Value";
@@ -41,10 +62,38 @@ export function TrendChart({ data }: { data: TrendResult }) {
     s.y.push(pt.value);
   }
 
-  const colors = [PRIMARY, SECONDARY, "#34c38f", "#e74c3c", "#9b59b6"];
   const seriesEntries = [...seriesMap.entries()];
 
-  const option: echarts.EChartsCoreOption = {
+  const chartSeries: ChartSeries[] = seriesEntries.map(([name, s], i) => {
+    const comparison = isComparisonLabel(name);
+    const color = PALETTE[i % PALETTE.length];
+    const opacity = comparison ? 0.5 : 1;
+
+    return {
+      name,
+      type: "line" as const,
+      data: s.y,
+      smooth: true,
+      symbol: "circle",
+      symbolSize: 6,
+      lineStyle: {
+        width: 2,
+        color,
+        type: comparison ? ("dashed" as const) : ("solid" as const),
+        opacity,
+      },
+      itemStyle: { color, opacity },
+      areaStyle: {
+        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+          { offset: 0, color: color + "33" },
+          { offset: 1, color: color + "05" },
+        ]),
+        opacity,
+      },
+    };
+  });
+
+  return {
     tooltip: {
       trigger: "axis",
       backgroundColor: "#fff",
@@ -70,21 +119,20 @@ export function TrendChart({ data }: { data: TrendResult }) {
       axisLabel: { fontFamily: "'Roboto', sans-serif", fontSize: 11, color: "#8e99a4" },
       splitLine: { lineStyle: { color: GRID_COLOR, type: "dashed" } },
     },
-    series: seriesEntries.map(([name, s], i) => ({
-      name,
-      type: "line",
-      data: s.y,
-      smooth: true,
-      symbol: "circle",
-      symbolSize: 6,
-      lineStyle: { width: 2, color: colors[i % colors.length] },
-      itemStyle: { color: colors[i % colors.length] },
-      areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-        { offset: 0, color: colors[i % colors.length] + "33" },
-        { offset: 1, color: colors[i % colors.length] + "05" },
-      ]) },
-    })),
+    series: chartSeries,
   };
+}
+
+export function TrendChart({ data }: { data: TrendResult }) {
+  const option = buildChartOption(data);
+
+  if (!option) {
+    return (
+      <div style={{ padding: 32, textAlign: "center", color: "#8e99a4", fontFamily: "'Roboto', sans-serif" }}>
+        No trend data available.
+      </div>
+    );
+  }
 
   return (
     <ReactEChartsCore
