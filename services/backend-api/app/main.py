@@ -13,6 +13,7 @@ from app.middleware.error_handler import (
     global_exception_handler,
     validation_exception_handler,
 )
+from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.request_log import RequestLogMiddleware
 from app.middleware.tenant import TenantMiddleware
 from app.repositories.duckdb_repo import DuckDBRepository
@@ -37,6 +38,7 @@ from app.services.query_builder import QueryBuilderService
 from app.services.report_service import ReportService
 from app.services.schema_cache import SchemaCache
 from app.services.schema_service import SchemaService
+from app.services.segment_query_service import SegmentQueryService
 from app.services.segment_service import SegmentService
 from app.services.trigger_service import TriggerService
 
@@ -85,6 +87,10 @@ async def lifespan(app: FastAPI):
     )
     schema_service = SchemaService(repo=pg_repo, cache=schema_cache)
     segment_service = SegmentService(pg_repo)
+    segment_query_service = SegmentQueryService(
+        segment_service=segment_service,
+        query_builder=query_builder,
+    )
 
     # --- Store on app.state ---
     app.state.pg_repo = pg_repo
@@ -97,6 +103,7 @@ async def lifespan(app: FastAPI):
     app.state.job_service = job_service
     app.state.schema_service = schema_service
     app.state.segment_service = segment_service
+    app.state.segment_query_service = segment_query_service
 
     logger.info("startup_complete")
     yield
@@ -124,6 +131,13 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 # --- Middleware (order matters: last added = first executed) ---
 app.add_middleware(RequestLogMiddleware)
 app.add_middleware(TenantMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Routers ---
 app.include_router(config_router.router)

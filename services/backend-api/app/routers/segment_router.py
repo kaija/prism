@@ -5,7 +5,14 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Request, status
 
 from app.models.common import PaginatedResult
-from app.models.segment import SegmentCreate, SegmentResponse, SegmentUpdate
+from app.models.segment import (
+    SegmentCreate,
+    SegmentQueryRequest,
+    SegmentQueryResponse,
+    SegmentResponse,
+    SegmentUpdate,
+)
+from app.services.segment_query_service import SegmentQueryService
 from app.services.segment_service import SegmentService
 
 router = APIRouter(
@@ -16,6 +23,10 @@ router = APIRouter(
 
 def _get_segment_service(request: Request) -> SegmentService:
     return request.app.state.segment_service
+
+def _get_segment_query_service(request: Request) -> SegmentQueryService:
+    return request.app.state.segment_query_service
+
 
 
 @router.post("", response_model=SegmentResponse, status_code=status.HTTP_201_CREATED)
@@ -78,3 +89,30 @@ async def delete_segment(
     if not deleted:
         raise HTTPException(status_code=404, detail=f"Segment {segment_id} not found")
     return {"deleted": True}
+
+@router.post("/{segment_id}/query", response_model=SegmentQueryResponse)
+async def query_segment(
+    project_id: str,
+    segment_id: str,
+    request: Request,
+    body: SegmentQueryRequest | None = None,
+) -> SegmentQueryResponse:
+    """Build a parameterized SQL query for a segment."""
+    svc = _get_segment_query_service(request)
+    try:
+        result = await svc.build_query(
+            project_id,
+            segment_id,
+            timeframe_override=body.timeframe_override if body else None,
+        )
+    except LookupError:
+        raise HTTPException(status_code=404, detail=f"Segment {segment_id} not found")
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return SegmentQueryResponse(
+        sql=result.sql,
+        params=result.params,
+        dsl=result.dsl,
+        timeframe=result.timeframe,
+    )
+

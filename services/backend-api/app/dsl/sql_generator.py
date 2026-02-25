@@ -39,12 +39,49 @@ class SqlGenerator:
                 return self._visit_function(name, args)
         raise ValueError(f"Unknown node: {node}")
 
+    def _visit_count(self, args: tuple) -> str:
+        """Handle COUNT with domain-aware semantics.
+
+        COUNT(EVENT("page_view"))
+          → COUNT(*) FILTER (WHERE "props"."event_name" = ?)
+
+        COUNT(WHERE(EVENT("page_view"), ...constraints))
+          → COUNT(*) FILTER (WHERE "props"."event_name" = ? AND ...constraints)
+        """
+        inner = args[0]
+
+        if isinstance(inner, FieldRef) and inner.source == "EVENT":
+            # COUNT(EVENT("event_name")) → COUNT(*) FILTER (WHERE "props"."event_name" = ?)
+            self.params.append(inner.field)
+            return 'COUNT(*) FILTER (WHERE "props"."event_name" = ?)'
+
+        if isinstance(inner, FunctionCall) and inner.name == "WHERE":
+            # COUNT(WHERE(EVENT("name"), ...constraints))
+            # The WHERE node's first arg is the event ref, rest are constraints
+            where_args = inner.args
+            event_ref = where_args[0]
+            constraints = where_args[1:]
+
+            if isinstance(event_ref, FieldRef) and event_ref.source == "EVENT":
+                self.params.append(event_ref.field)
+                event_filter = '"props"."event_name" = ?'
+                constraint_sqls = [self._visit(c) for c in constraints]
+                all_conditions = [event_filter] + constraint_sqls
+                return f'COUNT(*) FILTER (WHERE {" AND ".join(all_conditions)})'
+
+        # Fallback: generic COUNT
+        visited = self._visit(inner)
+        return f"COUNT({visited})"
+
     def _visit_function(self, name: str, args: tuple) -> str:
+        # Special handling for COUNT — the inner EVENT("name") means
+        # "count events where event_name = name", not "count column name".
+        if name == "COUNT":
+            return self._visit_count(args)
+
         visited = [self._visit(a) for a in args]
 
-        # Aggregation
-        if name == "COUNT":
-            return f"COUNT({visited[0]})"
+        # Aggregation (non-COUNT)
         if name == "SUM":
             return f"SUM({visited[0]})"
         if name == "AVG":

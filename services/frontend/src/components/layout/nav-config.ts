@@ -109,6 +109,21 @@ export const NAV_CATEGORIES: NavCategory[] = [
           { label: "Audit Log", href: "settings/audit-log", minRole: "admin" },
         ],
       },
+      {
+        label: "Schema",
+        minRole: "admin",
+        items: [
+          { label: "Profile Schema", href: "settings/schema/profile", minRole: "admin" },
+          { label: "Event Schema", href: "settings/schema/event", minRole: "admin" },
+        ],
+      },
+      {
+        label: "Segment",
+        minRole: "admin",
+        items: [
+          { label: "Segments", href: "settings/segments", minRole: "admin" },
+        ],
+      },
     ],
     defaultHref: "configuration",
   },

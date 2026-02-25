@@ -46,3 +46,18 @@ class SegmentResponse(BaseModel):
     timeframe: SegmentTimeframe
     created_at: datetime
     updated_at: datetime
+
+class SegmentQueryRequest(BaseModel):
+    """Segment Query API 的請求模型。"""
+
+    timeframe_override: Optional[SegmentTimeframe] = None
+
+
+class SegmentQueryResponse(BaseModel):
+    """Segment Query API 的回應模型。"""
+
+    sql: str
+    params: list
+    dsl: str
+    timeframe: SegmentTimeframe
+

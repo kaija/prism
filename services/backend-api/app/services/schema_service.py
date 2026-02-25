@@ -47,7 +47,14 @@ class SchemaService:
         if payload.property_type == "dynamic":
             self._run_dsl_validation(payload.formula)
 
-        # 3. Check name uniqueness within (project_id, schema_type)
+        # 3. Ensure project exists in the backend projects table
+        await self._repo.execute(
+            "INSERT INTO projects (project_id, name) VALUES ($1, $2) ON CONFLICT (project_id) DO NOTHING",
+            project_id,
+            project_id,
+        )
+
+        # 4. Check name uniqueness within (project_id, schema_type)
         existing = await self._repo.fetch_one(
             "SELECT id FROM attribute_definitions "
             "WHERE project_id = $1 AND entity_type = $2 AND attr_name = $3",
@@ -60,7 +67,7 @@ class SchemaService:
                 f"Property name '{payload.name}' already exists"
             )
 
-        # 4. INSERT
+        # 5. INSERT
         computed = payload.property_type == "dynamic"
         row = await self._repo.fetch_one(
             """
@@ -81,7 +88,7 @@ class SchemaService:
             payload.formula,
         )
 
-        # 5. Invalidate cache
+        # 6. Invalidate cache
         await self._cache.invalidate(project_id, schema_type)
 
         return self._row_to_response(row)

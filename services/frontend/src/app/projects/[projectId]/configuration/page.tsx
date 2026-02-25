@@ -49,6 +49,31 @@ export default async function ConfigurationPage({
         },
       ],
     },
+    {
+      title: "Schema",
+      items: [
+        {
+          label: "Profile Schema",
+          desc: "管理使用者 Profile 的屬性定義",
+          href: `/projects/${projectId}/settings/schema/profile`,
+        },
+        {
+          label: "Event Schema",
+          desc: "管理 Event 的屬性定義",
+          href: `/projects/${projectId}/settings/schema/event`,
+        },
+      ],
+    },
+    {
+      title: "Segment",
+      items: [
+        {
+          label: "Segments",
+          desc: "管理 Profile 分群規則",
+          href: `/projects/${projectId}/settings/segments`,
+        },
+      ],
+    },
   ];
 
   return (

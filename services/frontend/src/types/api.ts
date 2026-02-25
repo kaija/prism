@@ -259,3 +259,86 @@ export interface MeasureMetric {
   key: string;
   label: string;
 }
+
+// ─── Schema Types ───────────────────────────────────────────
+
+export interface SchemaProperty {
+  id: number;
+  project_id: string;
+  schema_type: "profile" | "event";
+  name: string;
+  data_type: string;
+  description: string | null;
+  property_type: "static" | "dynamic";
+  formula: string | null;
+  created_at: string;
+}
+
+export interface SchemaPropertyCreate {
+  name: string;
+  data_type: string;
+  description?: string | null;
+  property_type: "static" | "dynamic";
+  formula?: string | null;
+}
+
+export interface SchemaPropertyUpdate {
+  name?: string;
+  data_type?: string;
+  description?: string | null;
+  property_type?: "static" | "dynamic";
+  formula?: string | null;
+}
+
+export type SchemaType = "profile" | "event";
+
+// ─── Segment Types ──────────────────────────────────────────
+
+export interface SegmentTimeframe {
+  type: "absolute" | "relative";
+  start?: number;
+  end?: number;
+  relative?: string;
+}
+
+export interface SegmentCreate {
+  name: string;
+  description?: string;
+  dsl: string;
+  timeframe: SegmentTimeframe;
+}
+
+export interface SegmentUpdate {
+  name?: string;
+  description?: string;
+  dsl?: string;
+  timeframe?: SegmentTimeframe;
+}
+
+export interface SegmentResponse {
+  segment_id: string;
+  project_id: string;
+  name: string;
+  description?: string;
+  dsl: string;
+  timeframe: SegmentTimeframe;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DslValidationResult {
+  valid: boolean;
+  errors?: string[];
+}
+
+export interface SegmentQueryRequest {
+  timeframe_override?: SegmentTimeframe;
+}
+
+export interface SegmentQueryResponse {
+  sql: string;
+  params: (string | number | boolean | null)[];
+  dsl: string;
+  timeframe: SegmentTimeframe;
+}
+

@@ -13,6 +13,16 @@ import type {
   TriggerUpdate,
   SavedReport,
   SaveReportRequest,
+  SchemaProperty,
+  SchemaPropertyCreate,
+  SchemaPropertyUpdate,
+  SchemaType,
+  SegmentCreate,
+  SegmentUpdate,
+  SegmentResponse,
+  SegmentQueryRequest,
+  SegmentQueryResponse,
+  DslValidationResult,
 } from "@/types/api";
 
 export class APIError extends Error {
@@ -242,4 +252,118 @@ export class BackendAPIClient {
       method: "DELETE",
     });
   }
+
+
+  // ─── Schema ───────────────────────────────────────────────
+
+  async listSchemaProperties(projectId: string, schemaType: SchemaType): Promise<SchemaProperty[]> {
+    return this.request<SchemaProperty[]>(
+      `/api/v1/projects/${projectId}/schemas/${schemaType}`,
+    );
+  }
+
+  async createSchemaProperty(
+    projectId: string,
+    schemaType: SchemaType,
+    data: SchemaPropertyCreate,
+  ): Promise<SchemaProperty> {
+    return this.request<SchemaProperty>(
+      `/api/v1/projects/${projectId}/schemas/${schemaType}`,
+      { method: "POST", body: JSON.stringify(data) },
+    );
+  }
+
+  async updateSchemaProperty(
+    projectId: string,
+    schemaType: SchemaType,
+    propertyId: number,
+    data: SchemaPropertyUpdate,
+  ): Promise<SchemaProperty> {
+    return this.request<SchemaProperty>(
+      `/api/v1/projects/${projectId}/schemas/${schemaType}/${propertyId}`,
+      { method: "PUT", body: JSON.stringify(data) },
+    );
+  }
+
+  async deleteSchemaProperty(
+    projectId: string,
+    schemaType: SchemaType,
+    propertyId: number,
+  ): Promise<void> {
+    return this.request<void>(
+      `/api/v1/projects/${projectId}/schemas/${schemaType}/${propertyId}`,
+      { method: "DELETE" },
+    );
+  }
+
+  // ─── Segments ─────────────────────────────────────────────
+
+  async listSegments(
+    projectId: string,
+    page: number,
+    pageSize: number,
+  ): Promise<PaginatedResult<SegmentResponse>> {
+    return this.request<PaginatedResult<SegmentResponse>>(
+      `/api/v1/projects/${projectId}/segments?page=${page}&page_size=${pageSize}`,
+    );
+  }
+
+  async createSegment(
+    projectId: string,
+    data: SegmentCreate,
+  ): Promise<SegmentResponse> {
+    return this.request<SegmentResponse>(
+      `/api/v1/projects/${projectId}/segments`,
+      { method: "POST", body: JSON.stringify(data) },
+    );
+  }
+
+  async getSegment(
+    projectId: string,
+    segmentId: string,
+  ): Promise<SegmentResponse> {
+    return this.request<SegmentResponse>(
+      `/api/v1/projects/${projectId}/segments/${segmentId}`,
+    );
+  }
+
+  async updateSegment(
+    projectId: string,
+    segmentId: string,
+    data: SegmentUpdate,
+  ): Promise<SegmentResponse> {
+    return this.request<SegmentResponse>(
+      `/api/v1/projects/${projectId}/segments/${segmentId}`,
+      { method: "PUT", body: JSON.stringify(data) },
+    );
+  }
+
+  async deleteSegment(
+    projectId: string,
+    segmentId: string,
+  ): Promise<void> {
+    return this.request<void>(
+      `/api/v1/projects/${projectId}/segments/${segmentId}`,
+      { method: "DELETE" },
+    );
+  }
+
+  async validateDsl(expression: string): Promise<DslValidationResult> {
+    return this.request<DslValidationResult>(
+      `/api/v1/dsl/validate`,
+      { method: "POST", body: JSON.stringify({ expression }) },
+    );
+  }
+
+  async querySegment(
+    projectId: string,
+    segmentId: string,
+    body?: SegmentQueryRequest,
+  ): Promise<SegmentQueryResponse> {
+    return this.request<SegmentQueryResponse>(
+      `/api/v1/projects/${projectId}/segments/${segmentId}/query`,
+      { method: "POST", body: body ? JSON.stringify(body) : undefined },
+    );
+  }
+
 }
